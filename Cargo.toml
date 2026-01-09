@@ -1,0 +1,23 @@
+[package]
+name = "wp-data-fmt"
+version = "0.1.0"
+edition = "2024"
+license = "Elastic-2.0"
+authors = ["WarpParse Dev Team"]
+description = "Format wp_model_core records into JSON, CSV, KV, ProtoText, SQL, and raw text for WarpParse connectors"
+readme = "README.md"
+documentation = "https://docs.rs/wp-data-fmt"
+homepage = "https://github.com/wp-labs/wp-data-fmt"
+repository = "https://github.com/wp-labs/wp-data-fmt"
+keywords = ["wp", "data-format", "json", "csv", "sql"]
+
+[lib]
+name = "wp_data_fmt"
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+chrono = { version = "0.4", features = ["serde"] }
+wp-model-core    =  "0.7"
+
+thiserror = "2.0"
