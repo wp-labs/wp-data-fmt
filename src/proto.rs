@@ -1,5 +1,5 @@
 use crate::formatter::DataFormat;
-use wp_model_core::model::{DataField, DataRecord, DataType, Value, types::value::ObjectValue};
+use wp_model_core::model::{DataField, DataRecord, DataType, Value, types::value::ObjectValue, data::record::RecordItem, FieldStorage};
 
 #[derive(Default)]
 pub struct ProtoTxt;
@@ -41,10 +41,10 @@ impl DataFormat for ProtoTxt {
         out
     }
     fn format_array(&self, value: &[DataField]) -> String {
-        let items: Vec<String> = value.iter().map(|f| self.format_field(f)).collect();
+        let items: Vec<String> = value.iter().map(|f| self.fmt_value(f.get_value())).collect();
         format!("[{}]", items.join(", "))
     }
-    fn format_field(&self, field: &DataField) -> String {
+    fn format_field(&self, field: &FieldStorage) -> String {
         if *field.get_meta() == DataType::Ignore {
             String::new()
         } else {
@@ -154,7 +154,7 @@ mod tests {
     #[test]
     fn test_format_field() {
         let proto = ProtoTxt;
-        let field = DataField::from_chars("name", "Alice");
+        let field = FieldStorage::Owned(DataField::from_chars("name", "Alice"));
         let result = proto.format_field(&field);
         assert_eq!(result, "name: \"Alice\"");
     }
@@ -162,7 +162,7 @@ mod tests {
     #[test]
     fn test_format_field_digit() {
         let proto = ProtoTxt;
-        let field = DataField::from_digit("age", 30);
+        let field = FieldStorage::Owned(DataField::from_digit("age", 30));
         let result = proto.format_field(&field);
         assert_eq!(result, "age: 30");
     }
@@ -171,9 +171,10 @@ mod tests {
     fn test_format_record() {
         let proto = ProtoTxt;
         let record = DataRecord {
+            id: Default::default(),
             items: vec![
-                DataField::from_chars("name", "Alice"),
-                DataField::from_digit("age", 30),
+                FieldStorage::Owned(DataField::from_chars("name", "Alice")),
+                FieldStorage::Owned(DataField::from_digit("age", 30)),
             ],
         };
         let result = proto.format_record(&record);

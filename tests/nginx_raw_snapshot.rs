@@ -2,7 +2,7 @@ use chrono::NaiveDateTime;
 use std::net::{IpAddr, Ipv4Addr};
 use wp_data_fmt::{DataFormat, Raw};
 use wp_model_core::model::types::value::ObjectValue;
-use wp_model_core::model::{DataField, DataRecord};
+use wp_model_core::model::{DataField, DataRecord, FieldStorage};
 
 // 生成 Raw 文本的快照测试，参考 nginx_proto_txt_snapshot.rs
 // 关注点：
@@ -14,18 +14,19 @@ fn nginx_access_log_raw_snapshot() {
     let ts = NaiveDateTime::parse_from_str("2019-08-06 12:12:19", "%Y-%m-%d %H:%M:%S").unwrap();
 
     let record = DataRecord {
+        id: Default::default(),
         items: vec![
-            DataField::from_ip("ip", ip),
-            DataField::from_time("time", ts),
-            DataField::from_chars("http/request", "GET /nginx-logo.png HTTP/1.1"),
-            DataField::from_digit("http/status", 200),
-            DataField::from_digit("length", 368),
-            DataField::from_chars("chars", "http://119.122.1.4/"),
-            DataField::from_chars(
+            FieldStorage::Owned(DataField::from_ip("ip", ip)),
+            FieldStorage::Owned(DataField::from_time("time", ts)),
+            FieldStorage::Owned(DataField::from_chars("http/request", "GET /nginx-logo.png HTTP/1.1")),
+            FieldStorage::Owned(DataField::from_digit("http/status", 200)),
+            FieldStorage::Owned(DataField::from_digit("length", 368)),
+            FieldStorage::Owned(DataField::from_chars("chars", "http://119.122.1.4/")),
+            FieldStorage::Owned(DataField::from_chars(
                 "http/agent",
                 "Mozilla/5.0(Macintosh; Intel Mac OS X 10_14_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36 ",
-            ),
-            DataField::from_chars("src_key", "_"),
+            )),
+            FieldStorage::Owned(DataField::from_chars("src_key", "_")),
         ],
     };
 
@@ -47,9 +48,10 @@ fn raw_keeps_nested_values() {
     ];
 
     let record = DataRecord {
+        id: Default::default(),
         items: vec![
-            DataField::from_obj("payload", obj),
-            DataField::from_arr("list", array),
+            FieldStorage::Owned(DataField::from_obj("payload", obj)),
+            FieldStorage::Owned(DataField::from_arr("list", array)),
         ],
     };
 

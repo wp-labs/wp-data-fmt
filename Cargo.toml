@@ -18,6 +18,6 @@ name = "wp_data_fmt"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 chrono = { version = "0.4", features = ["serde"] }
-wp-model-core    =  "0.7"
+wp-model-core    =  "0.8"
 
 thiserror = "2.0"

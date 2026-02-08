@@ -1,4 +1,4 @@
-use wp_model_core::model::{DataField, DataRecord, Value, types::value::ObjectValue};
+use wp_model_core::model::{DataField, DataRecord, Value, types::value::ObjectValue, FieldStorage};
 
 use crate::{FormatType, SqlFormat};
 
@@ -31,7 +31,7 @@ pub trait DataFormat {
         }
     }
 
-    fn format_field(&self, field: &DataField) -> Self::Output;
+    fn format_field(&self, field: &FieldStorage) -> Self::Output;
     fn format_record(&self, record: &DataRecord) -> Self::Output;
 }
 
@@ -64,7 +64,7 @@ pub trait StaticDataFormatter {
         }
     }
 
-    fn stdfmt_field(field: &DataField) -> Self::Output;
+    fn stdfmt_field(field: &FieldStorage) -> Self::Output;
     fn stdfmt_record(record: &DataRecord) -> Self::Output;
 }
 
@@ -123,7 +123,7 @@ impl DataFormat for FormatType {
     fn format_array(&self, value: &[DataField]) -> Self::Output {
         self.as_formatter().format_array(value)
     }
-    fn format_field(&self, field: &DataField) -> Self::Output {
+    fn format_field(&self, field: &FieldStorage) -> Self::Output {
         self.as_formatter().format_field(field)
     }
     fn format_record(&self, record: &DataRecord) -> Self::Output {

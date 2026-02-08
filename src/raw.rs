@@ -1,6 +1,6 @@
 use crate::formatter::DataFormat;
 use wp_model_core::model::types::value::ObjectValue;
-use wp_model_core::model::{DataField, DataRecord, DataType, Value};
+use wp_model_core::model::{DataField, DataRecord, DataType, Value, data::record::RecordItem, FieldStorage};
 
 #[derive(Debug, Default)]
 pub struct Raw;
@@ -54,7 +54,7 @@ impl DataFormat for Raw {
             .collect();
         format!("[{}]", content.join(", "))
     }
-    fn format_field(&self, field: &DataField) -> String {
+    fn format_field(&self, field: &FieldStorage) -> String {
         match field.get_value() {
             Value::Chars(s) => s.to_string(),
             _ => self.fmt_value(field.get_value()),
@@ -151,7 +151,7 @@ mod tests {
     #[test]
     fn test_format_field_chars() {
         let raw = Raw;
-        let field = DataField::from_chars("name", "Alice");
+        let field = FieldStorage::Owned(DataField::from_chars("name", "Alice"));
         let result = raw.format_field(&field);
         assert_eq!(result, "Alice");
     }
@@ -159,7 +159,7 @@ mod tests {
     #[test]
     fn test_format_field_digit() {
         let raw = Raw;
-        let field = DataField::from_digit("age", 30);
+        let field = FieldStorage::Owned(DataField::from_digit("age", 30));
         let result = raw.format_field(&field);
         assert_eq!(result, "30");
     }
@@ -168,9 +168,10 @@ mod tests {
     fn test_format_record() {
         let raw = Raw;
         let record = DataRecord {
+            id: Default::default(),
             items: vec![
-                DataField::from_chars("name", "Alice"),
-                DataField::from_digit("age", 30),
+                FieldStorage::Owned(DataField::from_chars("name", "Alice")),
+                FieldStorage::Owned(DataField::from_digit("age", 30)),
             ],
         };
         let result = raw.format_record(&record);

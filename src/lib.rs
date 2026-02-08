@@ -63,7 +63,7 @@ impl From<&TextFmt> for SqlFormat {
 mod tests {
     use super::*;
     use formatter::DataFormat;
-    use wp_model_core::model::{DataField, DataRecord};
+    use wp_model_core::model::{DataField, DataRecord, FieldStorage};
 
     #[test]
     fn test_format_type_from_text_fmt_json() {
@@ -183,9 +183,10 @@ mod tests {
     fn test_format_type_format_record() {
         let json_fmt = FormatType::from(&TextFmt::Json);
         let record = DataRecord {
+            id: Default::default(),
             items: vec![
-                DataField::from_chars("name", "Alice"),
-                DataField::from_digit("age", 30),
+                FieldStorage::Owned(DataField::from_chars("name", "Alice")),
+                FieldStorage::Owned(DataField::from_digit("age", 30)),
             ],
         };
         let result = json_fmt.format_record(&record);
@@ -197,7 +198,7 @@ mod tests {
     #[test]
     fn test_format_type_format_field() {
         let fmt = FormatType::from(&TextFmt::Json);
-        let field = DataField::from_chars("key", "value");
+        let field = FieldStorage::Owned(DataField::from_chars("key", "value"));
         let result = fmt.format_field(&field);
         assert!(result.contains("key"));
         assert!(result.contains("value"));
@@ -207,9 +208,10 @@ mod tests {
     fn test_csv_format_type() {
         let csv_fmt = FormatType::from(&TextFmt::Csv);
         let record = DataRecord {
+            id: Default::default(),
             items: vec![
-                DataField::from_chars("a", "x"),
-                DataField::from_chars("b", "y"),
+                FieldStorage::Owned(DataField::from_chars("a", "x")),
+                FieldStorage::Owned(DataField::from_chars("b", "y")),
             ],
         };
         let result = csv_fmt.format_record(&record);
@@ -220,7 +222,8 @@ mod tests {
     fn test_kv_format_type() {
         let kv_fmt = FormatType::from(&TextFmt::Kv);
         let record = DataRecord {
-            items: vec![DataField::from_chars("name", "Alice")],
+            id: Default::default(),
+            items: vec![FieldStorage::Owned(DataField::from_chars("name", "Alice"))],
         };
         let result = kv_fmt.format_record(&record);
         assert!(result.contains("name"));

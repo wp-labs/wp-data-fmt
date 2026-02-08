@@ -1,6 +1,6 @@
 use crate::formatter::StaticDataFormatter;
 use serde_json::{Value as JsonValue, json};
-use wp_model_core::model::{DataField, DataRecord, DataType, Value, types::value::ObjectValue};
+use wp_model_core::model::{DataField, DataRecord, DataType, Value, types::value::ObjectValue, data::record::RecordItem, FieldStorage};
 
 #[derive(Debug, Default)]
 pub struct Json;
@@ -54,7 +54,7 @@ impl StaticDataFormatter for Json {
             .collect();
         format!("[{}]", items.join(","))
     }
-    fn stdfmt_field(field: &DataField) -> String {
+    fn stdfmt_field(field: &FieldStorage) -> String {
         if field.get_name().is_empty() {
             Self::stdfmt_value(field.get_value())
         } else {
@@ -107,7 +107,7 @@ impl crate::formatter::DataFormat for Json {
     fn format_array(&self, v: &[DataField]) -> String {
         Self::stdfmt_array(v)
     }
-    fn format_field(&self, f: &DataField) -> String {
+    fn format_field(&self, f: &FieldStorage) -> String {
         Self::stdfmt_field(f)
     }
     fn format_record(&self, r: &DataRecord) -> String {
@@ -217,14 +217,14 @@ mod tests {
 
     #[test]
     fn test_json_stdfmt_field_with_name() {
-        let field = DataField::from_chars("name", "Alice");
+        let field = FieldStorage::Owned(DataField::from_chars("name", "Alice"));
         let result = Json::stdfmt_field(&field);
         assert_eq!(result, "\"name\":\"Alice\"");
     }
 
     #[test]
     fn test_json_stdfmt_field_without_name() {
-        let field = DataField::from_chars("", "value");
+        let field = FieldStorage::Owned(DataField::from_chars("", "value"));
         let result = Json::stdfmt_field(&field);
         assert_eq!(result, "\"value\"");
     }
@@ -232,9 +232,10 @@ mod tests {
     #[test]
     fn test_json_stdfmt_record() {
         let record = DataRecord {
+            id: Default::default(),
             items: vec![
-                DataField::from_chars("name", "Alice"),
-                DataField::from_digit("age", 30),
+                FieldStorage::Owned(DataField::from_chars("name", "Alice")),
+                FieldStorage::Owned(DataField::from_digit("age", 30)),
             ],
         };
         let result = Json::stdfmt_record(&record);

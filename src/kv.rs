@@ -1,6 +1,6 @@
 use crate::formatter::DataFormat;
 use std::fmt::Write;
-use wp_model_core::model::{DataField, DataRecord, DataType, types::value::ObjectValue};
+use wp_model_core::model::{DataField, DataRecord, DataType, types::value::ObjectValue, data::record::RecordItem, FieldStorage};
 
 pub struct KeyValue {
     pair_separator: String,
@@ -102,7 +102,7 @@ impl DataFormat for KeyValue {
         output
     }
 
-    fn format_field(&self, field: &DataField) -> String {
+    fn format_field(&self, field: &FieldStorage) -> String {
         format!(
             "{}{}{}",
             field.get_name(),
@@ -219,7 +219,7 @@ mod tests {
     #[test]
     fn test_format_field() {
         let kv = KeyValue::default();
-        let field = DataField::from_chars("name", "Alice");
+        let field = FieldStorage::Owned(DataField::from_chars("name", "Alice"));
         let result = kv.format_field(&field);
         assert_eq!(result, "name: \"Alice\"");
     }
@@ -227,7 +227,7 @@ mod tests {
     #[test]
     fn test_format_field_with_custom_separator() {
         let kv = KeyValue::new().with_key_value_separator("=");
-        let field = DataField::from_digit("age", 30);
+        let field = FieldStorage::Owned(DataField::from_digit("age", 30));
         let result = kv.format_field(&field);
         assert_eq!(result, "age=30");
     }
@@ -236,9 +236,10 @@ mod tests {
     fn test_format_record() {
         let kv = KeyValue::default();
         let record = DataRecord {
+            id: Default::default(),
             items: vec![
-                DataField::from_chars("name", "Alice"),
-                DataField::from_digit("age", 30),
+                FieldStorage::Owned(DataField::from_chars("name", "Alice")),
+                FieldStorage::Owned(DataField::from_digit("age", 30)),
             ],
         };
         let result = kv.format_record(&record);
@@ -254,9 +255,10 @@ mod tests {
             .with_key_value_separator("=")
             .with_quote_strings(false);
         let record = DataRecord {
+            id: Default::default(),
             items: vec![
-                DataField::from_chars("a", "x"),
-                DataField::from_chars("b", "y"),
+                FieldStorage::Owned(DataField::from_chars("a", "x")),
+                FieldStorage::Owned(DataField::from_chars("b", "y")),
             ],
         };
         let result = kv.format_record(&record);

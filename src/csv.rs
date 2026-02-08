@@ -1,6 +1,6 @@
 use crate::formatter::DataFormat;
 use std::fmt::Write;
-use wp_model_core::model::{DataField, DataRecord, DataType, types::value::ObjectValue};
+use wp_model_core::model::{DataField, DataRecord, DataType, types::value::ObjectValue, data::record::RecordItem, FieldStorage};
 
 pub struct Csv {
     delimiter: char,
@@ -94,14 +94,14 @@ impl DataFormat for Csv {
         self.escape_string(
             &value
                 .iter()
-                .map(|f| self.format_field(f))
+                .map(|f| self.fmt_value(f.get_value()))
                 .collect::<Vec<_>>()
                 .join(", "),
             &mut output,
         );
         output
     }
-    fn format_field(&self, field: &DataField) -> String {
+    fn format_field(&self, field: &FieldStorage) -> String {
         self.fmt_value(field.get_value())
     }
     fn format_record(&self, record: &DataRecord) -> String {
@@ -236,9 +236,10 @@ mod tests {
     fn test_format_record() {
         let csv = Csv::default();
         let record = DataRecord {
+            id: Default::default(),
             items: vec![
-                DataField::from_chars("name", "Alice"),
-                DataField::from_digit("age", 30),
+                FieldStorage::Owned(DataField::from_chars("name", "Alice")),
+                FieldStorage::Owned(DataField::from_digit("age", 30)),
             ],
         };
         let result = csv.format_record(&record);
@@ -249,9 +250,10 @@ mod tests {
     fn test_format_record_with_custom_delimiter() {
         let csv = Csv::new().with_delimiter(';');
         let record = DataRecord {
+            id: Default::default(),
             items: vec![
-                DataField::from_chars("a", "x"),
-                DataField::from_chars("b", "y"),
+                FieldStorage::Owned(DataField::from_chars("a", "x")),
+                FieldStorage::Owned(DataField::from_chars("b", "y")),
             ],
         };
         let result = csv.format_record(&record);
@@ -262,9 +264,10 @@ mod tests {
     fn test_format_record_with_special_chars() {
         let csv = Csv::default();
         let record = DataRecord {
+            id: Default::default(),
             items: vec![
-                DataField::from_chars("msg", "hello,world"),
-                DataField::from_digit("count", 5),
+                FieldStorage::Owned(DataField::from_chars("msg", "hello,world")),
+                FieldStorage::Owned(DataField::from_digit("count", 5)),
             ],
         };
         let result = csv.format_record(&record);

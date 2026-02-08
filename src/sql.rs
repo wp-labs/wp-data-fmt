@@ -1,6 +1,6 @@
 use crate::formatter::DataFormat;
 use wp_model_core::model::fmt_def::TextFmt;
-use wp_model_core::model::{DataField, DataRecord, DataType, Value, types::value::ObjectValue};
+use wp_model_core::model::{DataField, DataRecord, DataType, Value, types::value::ObjectValue, data::record::RecordItem, FieldStorage};
 
 pub struct SqlInsert {
     pub table_name: String,
@@ -110,7 +110,7 @@ impl DataFormat for SqlInsert {
             values.join(", ")
         )
     }
-    fn format_field(&self, field: &DataField) -> String {
+    fn format_field(&self, field: &FieldStorage) -> String {
         if *field.get_meta() == DataType::Ignore {
             String::new()
         } else {
@@ -229,9 +229,10 @@ mod tests {
             obj_formatter: crate::SqlFormat::from(&TextFmt::Json),
         };
         let r = DataRecord {
+            id: Default::default(),
             items: vec![
-                DataField::from_chars("name", "Alice"),
-                DataField::from_digit("age", 30),
+                FieldStorage::Owned(DataField::from_chars("name", "Alice")),
+                FieldStorage::Owned(DataField::from_digit("age", 30)),
             ],
         };
         let s = f.format_record(&r);
@@ -351,10 +352,11 @@ mod tests {
     fn test_format_record() {
         let sql = SqlInsert::new_with_json("users");
         let record = DataRecord {
+            id: Default::default(),
             items: vec![
-                DataField::from_chars("name", "Alice"),
-                DataField::from_digit("age", 30),
-                DataField::from_bool("active", true),
+                FieldStorage::Owned(DataField::from_chars("name", "Alice")),
+                FieldStorage::Owned(DataField::from_digit("age", 30)),
+                FieldStorage::Owned(DataField::from_bool("active", true)),
             ],
         };
         let result = sql.format_record(&record);
@@ -376,15 +378,17 @@ mod tests {
         let sql = SqlInsert::new_with_json("users");
         let records = vec![
             DataRecord {
+            id: Default::default(),
                 items: vec![
-                    DataField::from_chars("name", "Alice"),
-                    DataField::from_digit("age", 30),
+                    FieldStorage::Owned(DataField::from_chars("name", "Alice")),
+                    FieldStorage::Owned(DataField::from_digit("age", 30)),
                 ],
             },
             DataRecord {
+            id: Default::default(),
                 items: vec![
-                    DataField::from_chars("name", "Bob"),
-                    DataField::from_digit("age", 25),
+                    FieldStorage::Owned(DataField::from_chars("name", "Bob")),
+                    FieldStorage::Owned(DataField::from_digit("age", 25)),
                 ],
             },
         ];
@@ -406,11 +410,12 @@ mod tests {
     fn test_generate_create_table() {
         let sql = SqlInsert::new_with_json("users");
         let records = vec![DataRecord {
+            id: Default::default(),
             items: vec![
-                DataField::from_chars("name", "Alice"),
-                DataField::from_digit("age", 30),
-                DataField::from_bool("active", true),
-                DataField::from_float("score", 95.5),
+                FieldStorage::Owned(DataField::from_chars("name", "Alice")),
+                FieldStorage::Owned(DataField::from_digit("age", 30)),
+                FieldStorage::Owned(DataField::from_bool("active", true)),
+                FieldStorage::Owned(DataField::from_float("score", 95.5)),
             ],
         }];
         let result = sql.generate_create_table(&records);
@@ -425,10 +430,11 @@ mod tests {
     fn test_format_upsert() {
         let sql = SqlInsert::new_with_json("users");
         let record = DataRecord {
+            id: Default::default(),
             items: vec![
-                DataField::from_chars("id", "u1"),
-                DataField::from_chars("name", "Alice"),
-                DataField::from_digit("age", 30),
+                FieldStorage::Owned(DataField::from_chars("id", "u1")),
+                FieldStorage::Owned(DataField::from_chars("name", "Alice")),
+                FieldStorage::Owned(DataField::from_digit("age", 30)),
             ],
         };
         let result = sql.format_upsert(&record, &["id"]);
@@ -443,7 +449,8 @@ mod tests {
     fn test_format_upsert_no_update_columns() {
         let sql = SqlInsert::new_with_json("users");
         let record = DataRecord {
-            items: vec![DataField::from_chars("id", "u1")],
+            id: Default::default(),
+            items: vec![FieldStorage::Owned(DataField::from_chars("id", "u1"))],
         };
         // When all columns are conflict columns, no update is needed
         let result = sql.format_upsert(&record, &["id"]);
