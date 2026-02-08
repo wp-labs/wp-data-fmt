@@ -1,6 +1,10 @@
+#[allow(deprecated)]
 use crate::formatter::DataFormat;
+use crate::formatter::{RecordFormatter, ValueFormatter};
 use std::fmt::Write;
-use wp_model_core::model::{DataField, DataRecord, DataType, types::value::ObjectValue, data::record::RecordItem, FieldStorage};
+use wp_model_core::model::{
+    DataRecord, DataType, FieldStorage, data::record::RecordItem, types::value::ObjectValue,
+};
 
 pub struct Csv {
     delimiter: char,
@@ -54,6 +58,8 @@ impl Csv {
         }
     }
 }
+
+#[allow(deprecated)]
 impl DataFormat for Csv {
     type Output = String;
     fn format_null(&self) -> String {
@@ -89,7 +95,7 @@ impl DataFormat for Csv {
         }
         output
     }
-    fn format_array(&self, value: &[DataField]) -> String {
+    fn format_array(&self, value: &[FieldStorage]) -> String {
         let mut output = String::new();
         self.escape_string(
             &value
@@ -123,10 +129,12 @@ impl DataFormat for Csv {
 }
 
 #[cfg(test)]
+#[allow(deprecated)]
 mod tests {
     use super::*;
     use std::net::IpAddr;
     use std::str::FromStr;
+    use wp_model_core::model::DataField;
 
     #[test]
     fn test_csv_default() {
@@ -272,5 +280,88 @@ mod tests {
         };
         let result = csv.format_record(&record);
         assert!(result.contains("\"hello,world\""));
+    }
+}
+
+// ============================================================================
+// 新 trait 实现：ValueFormatter + RecordFormatter
+// ============================================================================
+
+#[allow(clippy::items_after_test_module)]
+impl ValueFormatter for Csv {
+    type Output = String;
+
+    fn format_value(&self, value: &wp_model_core::model::Value) -> String {
+        use wp_model_core::model::Value;
+        match value {
+            Value::Null => String::new(),
+            Value::Bool(v) => if *v { "true" } else { "false" }.to_string(),
+            Value::Chars(v) => {
+                let mut o = String::new();
+                self.escape_string(v, &mut o);
+                o
+            }
+            Value::Digit(v) => v.to_string(),
+            Value::Float(v) => v.to_string(),
+            Value::IpAddr(v) => {
+                let mut o = String::new();
+                self.escape_string(&v.to_string(), &mut o);
+                o
+            }
+            Value::Time(v) => {
+                let mut o = String::new();
+                self.escape_string(&v.to_string(), &mut o);
+                o
+            }
+            Value::Obj(v) => {
+                let mut output = String::new();
+                for (i, (k, field)) in v.iter().enumerate() {
+                    if i > 0 {
+                        output.push_str(", ");
+                    }
+                    write!(output, "{}:{}", k, self.format_value(field.get_value())).unwrap();
+                }
+                output
+            }
+            Value::Array(v) => {
+                let mut output = String::new();
+                self.escape_string(
+                    &v.iter()
+                        .map(|field| self.format_value(field.get_value()))
+                        .collect::<Vec<_>>()
+                        .join(", "),
+                    &mut output,
+                );
+                output
+            }
+            _ => {
+                let mut o = String::new();
+                self.escape_string(&value.to_string(), &mut o);
+                o
+            }
+        }
+    }
+}
+
+impl RecordFormatter for Csv {
+    fn fmt_field(&self, field: &FieldStorage) -> String {
+        self.format_value(field.get_value())
+    }
+
+    fn fmt_record(&self, record: &DataRecord) -> String {
+        let mut output = String::new();
+        let mut first = true;
+        for field in record
+            .items
+            .iter()
+            .filter(|f| *f.get_meta() != DataType::Ignore)
+        {
+            if !first {
+                output.push(self.delimiter);
+            }
+            first = false;
+            output.push_str(&self.fmt_field(field));
+        }
+        output
     }
 }

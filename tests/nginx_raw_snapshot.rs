@@ -1,3 +1,4 @@
+#![allow(deprecated)]
 use chrono::NaiveDateTime;
 use std::net::{IpAddr, Ipv4Addr};
 use wp_data_fmt::{DataFormat, Raw};
@@ -18,7 +19,10 @@ fn nginx_access_log_raw_snapshot() {
         items: vec![
             FieldStorage::Owned(DataField::from_ip("ip", ip)),
             FieldStorage::Owned(DataField::from_time("time", ts)),
-            FieldStorage::Owned(DataField::from_chars("http/request", "GET /nginx-logo.png HTTP/1.1")),
+            FieldStorage::Owned(DataField::from_chars(
+                "http/request",
+                "GET /nginx-logo.png HTTP/1.1",
+            )),
             FieldStorage::Owned(DataField::from_digit("http/status", 200)),
             FieldStorage::Owned(DataField::from_digit("length", 368)),
             FieldStorage::Owned(DataField::from_chars("chars", "http://119.122.1.4/")),
@@ -41,7 +45,10 @@ fn nginx_access_log_raw_snapshot() {
 #[test]
 fn raw_keeps_nested_values() {
     let mut obj = ObjectValue::new();
-    obj.insert("inner".to_string(), DataField::from_digit("inner", 7));
+    obj.insert(
+        "inner".to_string(),
+        FieldStorage::Owned(DataField::from_digit("inner", 7)),
+    );
     let array = vec![
         DataField::from_chars("a", "foo"),
         DataField::from_digit("b", 9),

@@ -1,3 +1,4 @@
+#![allow(deprecated)]
 use chrono::NaiveDateTime;
 use std::net::{IpAddr, Ipv4Addr};
 use wp_data_fmt::{DataFormat, ProtoTxt};
@@ -18,7 +19,10 @@ fn nginx_access_log_proto_text_snapshot() {
         items: vec![
             FieldStorage::Owned(DataField::from_ip("ip", ip)),
             FieldStorage::Owned(DataField::from_time("time", ts)),
-            FieldStorage::Owned(DataField::from_chars("http/request", "GET /nginx-logo.png HTTP/1.1")),
+            FieldStorage::Owned(DataField::from_chars(
+                "http/request",
+                "GET /nginx-logo.png HTTP/1.1",
+            )),
             FieldStorage::Owned(DataField::from_digit("http/status", 200)),
             FieldStorage::Owned(DataField::from_digit("length", 368)),
             FieldStorage::Owned(DataField::from_chars("chars", "http://119.122.1.4/")),

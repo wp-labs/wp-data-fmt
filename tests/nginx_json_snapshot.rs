@@ -1,7 +1,8 @@
+#![allow(deprecated)]
 use chrono::NaiveDateTime;
 use std::net::{IpAddr, Ipv4Addr};
 use wp_data_fmt::{DataFormat, Json};
-use wp_model_core::model::{DataField, DataRecord, DataType, Value, FieldStorage};
+use wp_model_core::model::{DataField, DataRecord, DataType, FieldStorage, Value};
 
 // 生成 JSON 文本的快照测试，参考 nginx_proto_txt_snapshot.rs
 // 关注点：
@@ -18,7 +19,10 @@ fn nginx_access_log_json_snapshot() {
         items: vec![
             FieldStorage::Owned(DataField::from_ip("ip", ip)),
             FieldStorage::Owned(DataField::from_time("time", ts)),
-            FieldStorage::Owned(DataField::from_chars("http/request", "GET /nginx-logo.png HTTP/1.1")),
+            FieldStorage::Owned(DataField::from_chars(
+                "http/request",
+                "GET /nginx-logo.png HTTP/1.1",
+            )),
             FieldStorage::Owned(DataField::from_digit("http/status", 200)),
             FieldStorage::Owned(DataField::from_digit("length", 368)),
             FieldStorage::Owned(DataField::from_chars("chars", "http://119.122.1.4/")),

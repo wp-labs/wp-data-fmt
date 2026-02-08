@@ -1,6 +1,8 @@
+#[allow(deprecated)]
 use crate::formatter::DataFormat;
+use crate::formatter::{RecordFormatter, ValueFormatter};
 use wp_model_core::model::types::value::ObjectValue;
-use wp_model_core::model::{DataField, DataRecord, DataType, Value, data::record::RecordItem, FieldStorage};
+use wp_model_core::model::{DataRecord, DataType, FieldStorage, Value, data::record::RecordItem};
 
 #[derive(Debug, Default)]
 pub struct Raw;
@@ -11,6 +13,7 @@ impl Raw {
     }
 }
 
+#[allow(deprecated)]
 impl DataFormat for Raw {
     type Output = String;
     fn format_null(&self) -> String {
@@ -44,7 +47,7 @@ impl DataFormat for Raw {
             .collect();
         format!("{{{}}}", segments.join(", "))
     }
-    fn format_array(&self, value: &[DataField]) -> String {
+    fn format_array(&self, value: &[FieldStorage]) -> String {
         if value.is_empty() {
             return "[]".to_string();
         }
@@ -72,10 +75,12 @@ impl DataFormat for Raw {
 }
 
 #[cfg(test)]
+#[allow(deprecated)]
 mod tests {
     use super::*;
     use std::net::IpAddr;
     use std::str::FromStr;
+    use wp_model_core::model::DataField;
 
     #[test]
     fn test_raw_new() {
@@ -181,7 +186,7 @@ mod tests {
     #[test]
     fn test_format_array_empty() {
         let raw = Raw;
-        let arr: Vec<DataField> = vec![];
+        let arr: Vec<FieldStorage> = vec![];
         assert_eq!(raw.format_array(&arr), "[]");
     }
 
@@ -189,9 +194,9 @@ mod tests {
     fn test_format_array_with_values() {
         let raw = Raw;
         let arr = vec![
-            DataField::from_digit("", 1),
-            DataField::from_digit("", 2),
-            DataField::from_digit("", 3),
+            FieldStorage::Owned(DataField::from_digit("", 1)),
+            FieldStorage::Owned(DataField::from_digit("", 2)),
+            FieldStorage::Owned(DataField::from_digit("", 3)),
         ];
         let result = raw.format_array(&arr);
         assert_eq!(result, "[1, 2, 3]");
@@ -202,5 +207,68 @@ mod tests {
         let raw = Raw;
         let obj = ObjectValue::new();
         assert_eq!(raw.format_object(&obj), "{}");
+    }
+}
+
+// ============================================================================
+// 新 trait 实现：ValueFormatter + RecordFormatter
+// ============================================================================
+
+#[allow(clippy::items_after_test_module)]
+impl ValueFormatter for Raw {
+    type Output = String;
+
+    fn format_value(&self, value: &Value) -> String {
+        match value {
+            Value::Null => String::new(),
+            Value::Bool(v) => v.to_string(),
+            Value::Chars(v) => v.to_string(),
+            Value::Digit(v) => v.to_string(),
+            Value::Float(v) => v.to_string(),
+            Value::IpAddr(v) => v.to_string(),
+            Value::Time(v) => v.to_string(),
+            Value::Obj(obj) => {
+                if obj.is_empty() {
+                    "{}".to_string()
+                } else {
+                    let segments: Vec<String> = obj
+                        .iter()
+                        .map(|(k, field)| format!("{}={}", k, self.format_value(field.get_value())))
+                        .collect();
+                    format!("{{{}}}", segments.join(", "))
+                }
+            }
+            Value::Array(arr) => {
+                if arr.is_empty() {
+                    "[]".to_string()
+                } else {
+                    let content: Vec<String> = arr
+                        .iter()
+                        .map(|field| self.format_value(field.get_value()))
+                        .collect();
+                    format!("[{}]", content.join(", "))
+                }
+            }
+            _ => value.to_string(),
+        }
+    }
+}
+
+impl RecordFormatter for Raw {
+    fn fmt_field(&self, field: &FieldStorage) -> String {
+        match field.get_value() {
+            Value::Chars(s) => s.to_string(),
+            _ => self.format_value(field.get_value()),
+        }
+    }
+
+    fn fmt_record(&self, record: &DataRecord) -> String {
+        record
+            .items
+            .iter()
+            .filter(|f| *f.get_meta() != DataType::Ignore)
+            .map(|f| self.fmt_field(f))
+            .collect::<Vec<_>>()
+            .join(" ")
     }
 }

@@ -1,6 +1,10 @@
+#[allow(deprecated)]
 use crate::formatter::DataFormat;
+use crate::formatter::{RecordFormatter, ValueFormatter};
 use wp_model_core::model::fmt_def::TextFmt;
-use wp_model_core::model::{DataField, DataRecord, DataType, Value, types::value::ObjectValue, data::record::RecordItem, FieldStorage};
+use wp_model_core::model::{
+    DataRecord, DataType, FieldStorage, Value, data::record::RecordItem, types::value::ObjectValue,
+};
 
 pub struct SqlInsert {
     pub table_name: String,
@@ -39,6 +43,7 @@ impl SqlInsert {
     }
 }
 
+#[allow(deprecated)]
 impl DataFormat for SqlInsert {
     type Output = String;
     fn format_null(&self) -> String {
@@ -81,7 +86,7 @@ impl DataFormat for SqlInsert {
         };
         format!("'{}'", self.escape_string(&inner))
     }
-    fn format_array(&self, value: &[DataField]) -> String {
+    fn format_array(&self, value: &[FieldStorage]) -> String {
         let inner = match &self.obj_formatter {
             crate::SqlFormat::Json(f) => f.format_array(value),
             crate::SqlFormat::Kv(f) => f.format_array(value),
@@ -120,6 +125,7 @@ impl DataFormat for SqlInsert {
 }
 
 impl SqlInsert {
+    #[allow(deprecated)]
     pub fn format_batch(&self, records: &[DataRecord]) -> String {
         if records.is_empty() {
             return String::new();
@@ -185,6 +191,7 @@ impl SqlInsert {
             columns.join(",\n")
         )
     }
+    #[allow(deprecated)]
     pub fn format_upsert(&self, record: &DataRecord, conflict_columns: &[&str]) -> String {
         let insert = self.format_record(record);
         let mut update_parts = Vec::new();
@@ -217,6 +224,7 @@ impl SqlInsert {
 }
 
 #[cfg(test)]
+#[allow(deprecated)]
 mod tests {
     use super::*;
     use crate::formatter::DataFormat;
@@ -256,52 +264,58 @@ mod tests {
     #[test]
     fn test_format_null() {
         let sql = SqlInsert::default();
-        assert_eq!(sql.format_null(), "NULL");
+        assert_eq!(sql.format_value(&Value::Null), "NULL");
     }
 
     #[test]
     fn test_format_bool() {
         let sql = SqlInsert::default();
-        assert_eq!(sql.format_bool(&true), "TRUE");
-        assert_eq!(sql.format_bool(&false), "FALSE");
+        assert_eq!(sql.format_value(&Value::Bool(true)), "TRUE");
+        assert_eq!(sql.format_value(&Value::Bool(false)), "FALSE");
     }
 
     #[test]
     fn test_format_string() {
         let sql = SqlInsert::default();
-        assert_eq!(sql.format_string("hello"), "'hello'");
-        assert_eq!(sql.format_string(""), "''");
+        assert_eq!(sql.format_value(&Value::Chars("hello".into())), "'hello'");
+        assert_eq!(sql.format_value(&Value::Chars("".into())), "''");
     }
 
     #[test]
     fn test_format_string_escape() {
         let sql = SqlInsert::default();
         // Single quotes should be escaped by doubling
-        assert_eq!(sql.format_string("it's"), "'it''s'");
-        assert_eq!(sql.format_string("say 'hi'"), "'say ''hi'''");
+        assert_eq!(sql.format_value(&Value::Chars("it's".into())), "'it''s'");
+        assert_eq!(
+            sql.format_value(&Value::Chars("say 'hi'".into())),
+            "'say ''hi'''"
+        );
     }
 
     #[test]
     fn test_format_i64() {
         let sql = SqlInsert::default();
-        assert_eq!(sql.format_i64(&0), "0");
-        assert_eq!(sql.format_i64(&42), "42");
-        assert_eq!(sql.format_i64(&-100), "-100");
+        assert_eq!(sql.format_value(&Value::Digit(0)), "0");
+        assert_eq!(sql.format_value(&Value::Digit(42)), "42");
+        assert_eq!(sql.format_value(&Value::Digit(-100)), "-100");
     }
 
     #[test]
     fn test_format_f64_normal() {
         let sql = SqlInsert::default();
-        assert_eq!(sql.format_f64(&3.24), "3.24");
-        assert_eq!(sql.format_f64(&0.0), "0");
+        assert_eq!(sql.format_value(&Value::Float(3.24)), "3.24");
+        assert_eq!(sql.format_value(&Value::Float(0.0)), "0");
     }
 
     #[test]
     fn test_format_f64_special() {
         let sql = SqlInsert::default();
-        assert_eq!(sql.format_f64(&f64::NAN), "NULL");
-        assert_eq!(sql.format_f64(&f64::INFINITY), "'Infinity'");
-        assert_eq!(sql.format_f64(&f64::NEG_INFINITY), "'-Infinity'");
+        assert_eq!(sql.format_value(&Value::Float(f64::NAN)), "NULL");
+        assert_eq!(sql.format_value(&Value::Float(f64::INFINITY)), "'Infinity'");
+        assert_eq!(
+            sql.format_value(&Value::Float(f64::NEG_INFINITY)),
+            "'-Infinity'"
+        );
     }
 
     #[test]
@@ -310,7 +324,7 @@ mod tests {
         use std::str::FromStr;
         let sql = SqlInsert::default();
         let ip = IpAddr::from_str("192.168.1.1").unwrap();
-        assert_eq!(sql.format_ip(&ip), "'192.168.1.1'");
+        assert_eq!(sql.format_value(&Value::IpAddr(ip)), "'192.168.1.1'");
     }
 
     #[test]
@@ -318,7 +332,7 @@ mod tests {
         let sql = SqlInsert::default();
         let dt = chrono::NaiveDateTime::parse_from_str("2024-01-15 10:30:45", "%Y-%m-%d %H:%M:%S")
             .unwrap();
-        let result = sql.format_datetime(&dt);
+        let result = sql.format_value(&Value::Time(dt));
         assert!(result.starts_with('\''));
         assert!(result.ends_with('\''));
         assert!(result.contains("2024"));
@@ -359,7 +373,7 @@ mod tests {
                 FieldStorage::Owned(DataField::from_bool("active", true)),
             ],
         };
-        let result = sql.format_record(&record);
+        let result = sql.fmt_record(&record);
         assert!(result.starts_with("INSERT INTO \"users\""));
         assert!(result.contains("(\"name\", \"age\", \"active\")"));
         assert!(result.contains("VALUES ('Alice', 30, TRUE)"));
@@ -378,14 +392,14 @@ mod tests {
         let sql = SqlInsert::new_with_json("users");
         let records = vec![
             DataRecord {
-            id: Default::default(),
+                id: Default::default(),
                 items: vec![
                     FieldStorage::Owned(DataField::from_chars("name", "Alice")),
                     FieldStorage::Owned(DataField::from_digit("age", 30)),
                 ],
             },
             DataRecord {
-            id: Default::default(),
+                id: Default::default(),
                 items: vec![
                     FieldStorage::Owned(DataField::from_chars("name", "Bob")),
                     FieldStorage::Owned(DataField::from_digit("age", 25)),
@@ -457,5 +471,121 @@ mod tests {
         // Should just be a regular insert with semicolon
         assert!(result.contains("INSERT INTO"));
         assert!(!result.contains("ON CONFLICT"));
+    }
+}
+
+// ============================================================================
+// 新 trait 实现：ValueFormatter + RecordFormatter
+// ============================================================================
+
+#[allow(clippy::items_after_test_module)]
+impl ValueFormatter for SqlInsert {
+    type Output = String;
+
+    fn format_value(&self, value: &Value) -> String {
+        match value {
+            Value::Null => "NULL".to_string(),
+            Value::Bool(v) => if *v { "TRUE" } else { "FALSE" }.to_string(),
+            Value::Chars(v) => format!("'{}'", self.escape_string(v)),
+            Value::Digit(v) => v.to_string(),
+            Value::Float(v) => {
+                if v.is_nan() {
+                    "NULL".into()
+                } else if v.is_infinite() {
+                    if v.is_sign_positive() {
+                        "'Infinity'".into()
+                    } else {
+                        "'-Infinity'".into()
+                    }
+                } else {
+                    v.to_string()
+                }
+            }
+            Value::IpAddr(v) => format!("'{}'", self.escape_string(&v.to_string())),
+            Value::Time(v) => format!("'{}'", self.escape_string(&v.to_string())),
+            Value::Obj(_obj) => {
+                let inner = match &self.obj_formatter {
+                    crate::SqlFormat::Json(f) => f.format_value(value),
+                    crate::SqlFormat::Kv(f) => f.format_value(value),
+                    crate::SqlFormat::Raw(f) => f.format_value(value),
+                    crate::SqlFormat::ProtoText(f) => f.format_value(value),
+                };
+                format!("'{}'", self.escape_string(&inner))
+            }
+            Value::Array(arr) => {
+                let inner = match &self.obj_formatter {
+                    crate::SqlFormat::Json(f) => {
+                        let items: Vec<String> = arr
+                            .iter()
+                            .map(|field| f.format_value(field.get_value()))
+                            .collect();
+                        format!("[{}]", items.join(","))
+                    }
+                    crate::SqlFormat::Kv(f) => {
+                        let mut output = String::new();
+                        output.push('[');
+                        for (i, field) in arr.iter().enumerate() {
+                            if i > 0 {
+                                output.push_str(", ");
+                            }
+                            output.push_str(&f.format_value(field.get_value()));
+                        }
+                        output.push(']');
+                        output
+                    }
+                    crate::SqlFormat::Raw(f) => {
+                        if arr.is_empty() {
+                            "[]".to_string()
+                        } else {
+                            let content: Vec<String> = arr
+                                .iter()
+                                .map(|field| f.format_value(field.get_value()))
+                                .collect();
+                            format!("[{}]", content.join(", "))
+                        }
+                    }
+                    crate::SqlFormat::ProtoText(f) => {
+                        let items: Vec<String> = arr
+                            .iter()
+                            .map(|field| f.format_value(field.get_value()))
+                            .collect();
+                        format!("[{}]", items.join(", "))
+                    }
+                };
+                format!("'{}'", self.escape_string(&inner))
+            }
+            _ => format!("'{}'", self.escape_string(&value.to_string())),
+        }
+    }
+}
+
+impl RecordFormatter for SqlInsert {
+    fn fmt_field(&self, field: &FieldStorage) -> String {
+        if *field.get_meta() == DataType::Ignore {
+            String::new()
+        } else {
+            self.format_value(field.get_value())
+        }
+    }
+
+    fn fmt_record(&self, record: &DataRecord) -> String {
+        let columns: Vec<String> = record
+            .items
+            .iter()
+            .filter(|f| *f.get_meta() != DataType::Ignore)
+            .map(|f| self.quote_identifier(f.get_name()))
+            .collect();
+        let values: Vec<String> = record
+            .items
+            .iter()
+            .filter(|f| *f.get_meta() != DataType::Ignore)
+            .map(|f| self.fmt_field(f))
+            .collect();
+        format!(
+            "INSERT INTO {} ({}) VALUES ({});",
+            self.quote_identifier(&self.table_name),
+            columns.join(", "),
+            values.join(", ")
+        )
     }
 }

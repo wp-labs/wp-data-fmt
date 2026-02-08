@@ -1,6 +1,10 @@
+#[allow(deprecated)]
 use crate::formatter::DataFormat;
+use crate::formatter::{RecordFormatter, ValueFormatter};
 use std::fmt::Write;
-use wp_model_core::model::{DataField, DataRecord, DataType, types::value::ObjectValue, data::record::RecordItem, FieldStorage};
+use wp_model_core::model::{
+    DataRecord, DataType, FieldStorage, data::record::RecordItem, types::value::ObjectValue,
+};
 
 pub struct KeyValue {
     pair_separator: String,
@@ -44,6 +48,7 @@ impl KeyValue {
     }
 }
 
+#[allow(deprecated)]
 impl DataFormat for KeyValue {
     type Output = String;
 
@@ -89,7 +94,7 @@ impl DataFormat for KeyValue {
         output
     }
 
-    fn format_array(&self, value: &[DataField]) -> String {
+    fn format_array(&self, value: &[FieldStorage]) -> String {
         let mut output = String::new();
         output.push('[');
         for (i, field) in value.iter().enumerate() {
@@ -123,10 +128,12 @@ impl DataFormat for KeyValue {
 }
 
 #[cfg(test)]
+#[allow(deprecated)]
 mod tests {
     use super::*;
     use std::net::IpAddr;
     use std::str::FromStr;
+    use wp_model_core::model::DataField;
 
     #[test]
     fn test_kv_default() {
@@ -268,11 +275,89 @@ mod tests {
     #[test]
     fn test_format_array() {
         let kv = KeyValue::default();
-        let arr = vec![DataField::from_digit("", 1), DataField::from_digit("", 2)];
+        let arr = vec![
+            FieldStorage::Owned(DataField::from_digit("", 1)),
+            FieldStorage::Owned(DataField::from_digit("", 2)),
+        ];
         let result = kv.format_array(&arr);
         assert!(result.starts_with('['));
         assert!(result.ends_with(']'));
         assert!(result.contains("1"));
         assert!(result.contains("2"));
+    }
+}
+
+// ============================================================================
+// 新 trait 实现：ValueFormatter + RecordFormatter
+// ============================================================================
+
+#[allow(clippy::items_after_test_module)]
+impl ValueFormatter for KeyValue {
+    type Output = String;
+
+    fn format_value(&self, value: &wp_model_core::model::Value) -> String {
+        use wp_model_core::model::Value;
+        match value {
+            Value::Null => String::new(),
+            Value::Bool(v) => if *v { "true" } else { "false" }.to_string(),
+            Value::Chars(v) => self.format_string_value(v),
+            Value::Digit(v) => v.to_string(),
+            Value::Float(v) => v.to_string(),
+            Value::IpAddr(v) => v.to_string(),
+            Value::Time(v) => v.to_string(),
+            Value::Obj(obj) => {
+                let mut output = String::new();
+                output.push('{');
+                for (i, (k, field)) in obj.iter().enumerate() {
+                    if i > 0 {
+                        output.push_str(&self.pair_separator);
+                    }
+                    write!(
+                        output,
+                        "{}{}{}",
+                        self.format_string_value(k),
+                        self.key_value_separator,
+                        self.format_value(field.get_value())
+                    )
+                    .unwrap();
+                }
+                output.push('}');
+                output
+            }
+            Value::Array(arr) => {
+                let mut output = String::new();
+                output.push('[');
+                for (i, field) in arr.iter().enumerate() {
+                    if i > 0 {
+                        output.push_str(&self.pair_separator);
+                    }
+                    output.push_str(&self.format_value(field.get_value()));
+                }
+                output.push(']');
+                output
+            }
+            _ => value.to_string(),
+        }
+    }
+}
+
+impl RecordFormatter for KeyValue {
+    fn fmt_field(&self, field: &FieldStorage) -> String {
+        format!(
+            "{}{}{}",
+            field.get_name(),
+            self.key_value_separator,
+            self.format_value(field.get_value())
+        )
+    }
+
+    fn fmt_record(&self, record: &DataRecord) -> String {
+        record
+            .items
+            .iter()
+            .filter(|f| *f.get_meta() != DataType::Ignore)
+            .map(|field| self.fmt_field(field))
+            .collect::<Vec<_>>()
+            .join(&self.pair_separator)
     }
 }

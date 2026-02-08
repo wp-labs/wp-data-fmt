@@ -8,7 +8,8 @@ mod raw;
 mod sql;
 
 pub use csv::Csv;
-pub use formatter::{DataFormat, StaticDataFormatter};
+#[allow(deprecated)]
+pub use formatter::{DataFormat, RecordFormatter, StaticDataFormatter, ValueFormatter};
 pub use json::Json;
 pub use kv::KeyValue;
 pub use proto::ProtoTxt;
@@ -60,9 +61,9 @@ impl From<&TextFmt> for SqlFormat {
 }
 
 #[cfg(test)]
+#[allow(deprecated)]
 mod tests {
     use super::*;
-    use formatter::DataFormat;
     use wp_model_core::model::{DataField, DataRecord, FieldStorage};
 
     #[test]
@@ -140,43 +141,51 @@ mod tests {
 
     #[test]
     fn test_format_type_dataformat_null() {
+        use wp_model_core::model::Value;
         let fmt = FormatType::from(&TextFmt::Json);
-        assert_eq!(fmt.format_null(), "null");
+        assert_eq!(fmt.format_value(&Value::Null), "null");
 
         let fmt = FormatType::from(&TextFmt::Csv);
-        assert_eq!(fmt.format_null(), "");
+        assert_eq!(fmt.format_value(&Value::Null), "");
 
         let fmt = FormatType::from(&TextFmt::Raw);
-        assert_eq!(fmt.format_null(), "");
+        assert_eq!(fmt.format_value(&Value::Null), "");
     }
 
     #[test]
     fn test_format_type_dataformat_bool() {
+        use wp_model_core::model::Value;
         let fmt = FormatType::from(&TextFmt::Json);
-        assert_eq!(fmt.format_bool(&true), "true");
-        assert_eq!(fmt.format_bool(&false), "false");
+        assert_eq!(fmt.format_value(&Value::Bool(true)), "true");
+        assert_eq!(fmt.format_value(&Value::Bool(false)), "false");
     }
 
     #[test]
     fn test_format_type_dataformat_string() {
+        use wp_model_core::model::Value;
         let json_fmt = FormatType::from(&TextFmt::Json);
-        assert_eq!(json_fmt.format_string("hello"), "\"hello\"");
+        assert_eq!(
+            json_fmt.format_value(&Value::Chars("hello".into())),
+            "\"hello\""
+        );
 
         let raw_fmt = FormatType::from(&TextFmt::Raw);
-        assert_eq!(raw_fmt.format_string("hello"), "hello");
+        assert_eq!(raw_fmt.format_value(&Value::Chars("hello".into())), "hello");
     }
 
     #[test]
     fn test_format_type_dataformat_i64() {
+        use wp_model_core::model::Value;
         let fmt = FormatType::from(&TextFmt::Json);
-        assert_eq!(fmt.format_i64(&42), "42");
-        assert_eq!(fmt.format_i64(&-100), "-100");
+        assert_eq!(fmt.format_value(&Value::Digit(42)), "42");
+        assert_eq!(fmt.format_value(&Value::Digit(-100)), "-100");
     }
 
     #[test]
     fn test_format_type_dataformat_f64() {
+        use wp_model_core::model::Value;
         let fmt = FormatType::from(&TextFmt::Json);
-        assert_eq!(fmt.format_f64(&3.24), "3.24");
+        assert_eq!(fmt.format_value(&Value::Float(3.24)), "3.24");
     }
 
     #[test]
@@ -189,7 +198,7 @@ mod tests {
                 FieldStorage::Owned(DataField::from_digit("age", 30)),
             ],
         };
-        let result = json_fmt.format_record(&record);
+        let result = json_fmt.fmt_record(&record);
         assert!(result.starts_with('{'));
         assert!(result.ends_with('}'));
         assert!(result.contains("\"name\":\"Alice\""));
@@ -199,7 +208,7 @@ mod tests {
     fn test_format_type_format_field() {
         let fmt = FormatType::from(&TextFmt::Json);
         let field = FieldStorage::Owned(DataField::from_chars("key", "value"));
-        let result = fmt.format_field(&field);
+        let result = fmt.fmt_field(&field);
         assert!(result.contains("key"));
         assert!(result.contains("value"));
     }
@@ -214,7 +223,7 @@ mod tests {
                 FieldStorage::Owned(DataField::from_chars("b", "y")),
             ],
         };
-        let result = csv_fmt.format_record(&record);
+        let result = csv_fmt.fmt_record(&record);
         assert_eq!(result, "x,y");
     }
 
@@ -225,7 +234,7 @@ mod tests {
             id: Default::default(),
             items: vec![FieldStorage::Owned(DataField::from_chars("name", "Alice"))],
         };
-        let result = kv_fmt.format_record(&record);
+        let result = kv_fmt.fmt_record(&record);
         assert!(result.contains("name"));
         assert!(result.contains("Alice"));
     }

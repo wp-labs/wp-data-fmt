@@ -1,5 +1,9 @@
+#[allow(deprecated)]
 use crate::formatter::DataFormat;
-use wp_model_core::model::{DataField, DataRecord, DataType, Value, types::value::ObjectValue, data::record::RecordItem, FieldStorage};
+use crate::formatter::{RecordFormatter, ValueFormatter};
+use wp_model_core::model::{
+    DataRecord, DataType, FieldStorage, Value, data::record::RecordItem, types::value::ObjectValue,
+};
 
 #[derive(Default)]
 pub struct ProtoTxt;
@@ -10,6 +14,7 @@ impl ProtoTxt {
     }
 }
 
+#[allow(deprecated)]
 impl DataFormat for ProtoTxt {
     type Output = String;
     fn format_null(&self) -> String {
@@ -40,8 +45,11 @@ impl DataFormat for ProtoTxt {
         }
         out
     }
-    fn format_array(&self, value: &[DataField]) -> String {
-        let items: Vec<String> = value.iter().map(|f| self.fmt_value(f.get_value())).collect();
+    fn format_array(&self, value: &[FieldStorage]) -> String {
+        let items: Vec<String> = value
+            .iter()
+            .map(|f| self.fmt_value(f.get_value()))
+            .collect();
         format!("[{}]", items.join(", "))
     }
     fn format_field(&self, field: &FieldStorage) -> String {
@@ -75,10 +83,12 @@ impl DataFormat for ProtoTxt {
 }
 
 #[cfg(test)]
+#[allow(deprecated)]
 mod tests {
     use super::*;
     use std::net::IpAddr;
     use std::str::FromStr;
+    use wp_model_core::model::DataField;
 
     #[test]
     fn test_proto_new() {
@@ -187,9 +197,76 @@ mod tests {
     #[test]
     fn test_format_array() {
         let proto = ProtoTxt;
-        let arr = vec![DataField::from_digit("x", 1), DataField::from_digit("y", 2)];
+        let arr = vec![
+            FieldStorage::Owned(DataField::from_digit("x", 1)),
+            FieldStorage::Owned(DataField::from_digit("y", 2)),
+        ];
         let result = proto.format_array(&arr);
         assert!(result.starts_with('['));
         assert!(result.ends_with(']'));
+    }
+}
+
+// ============================================================================
+// 新 trait 实现：ValueFormatter + RecordFormatter
+// ============================================================================
+
+#[allow(clippy::items_after_test_module)]
+impl ValueFormatter for ProtoTxt {
+    type Output = String;
+
+    fn format_value(&self, value: &Value) -> String {
+        match value {
+            Value::Null => String::new(),
+            Value::Bool(v) => v.to_string(),
+            Value::Chars(v) => format!("\"{}\"", v.replace('"', "\\\"")),
+            Value::Digit(v) => v.to_string(),
+            Value::Float(v) => v.to_string(),
+            Value::IpAddr(v) => format!("\"{}\"", v),
+            Value::Time(v) => format!("\"{}\"", v),
+            Value::Obj(obj) => {
+                let mut out = String::new();
+                for (k, field) in obj.iter() {
+                    out.push_str(&format!(
+                        "{}: {}\n",
+                        k,
+                        self.format_value(field.get_value())
+                    ));
+                }
+                out
+            }
+            Value::Array(arr) => {
+                let items: Vec<String> = arr
+                    .iter()
+                    .map(|field| self.format_value(field.get_value()))
+                    .collect();
+                format!("[{}]", items.join(", "))
+            }
+            _ => format!("\"{}\"", value.to_string().replace('"', "\\\"")),
+        }
+    }
+}
+
+impl RecordFormatter for ProtoTxt {
+    fn fmt_field(&self, field: &FieldStorage) -> String {
+        if *field.get_meta() == DataType::Ignore {
+            String::new()
+        } else {
+            format!(
+                "{}: {}",
+                field.get_name(),
+                self.format_value(field.get_value())
+            )
+        }
+    }
+
+    fn fmt_record(&self, record: &DataRecord) -> String {
+        let items = record
+            .items
+            .iter()
+            .filter(|f| *f.get_meta() != DataType::Ignore)
+            .map(|f| self.fmt_field(f))
+            .collect::<Vec<_>>();
+        format!("{{ {} }}", items.join(" "))
     }
 }

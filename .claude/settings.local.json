@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cargo doc:*)",
+      "Bash(cargo build:*)",
+      "Bash(grep:*)",
+      "Bash(cargo test:*)",
+      "Bash(python3:*)",
+      "Bash(for file in src/*.rs)",
+      "Bash(do sed -i '' 's/\\)\\)\\);$/\\)\\);/g' \"$file\" done cargo test --lib)",
+      "Bash(ls:*)",
+      "Bash(find:*)",
+      "Bash(xargs cat:*)",
+      "Bash(cargo update:*)",
+      "Bash(cargo clippy:*)",
+      "Bash(RUSTFLAGS=\"-D warnings\" cargo build:*)",
+      "Bash(RUSTFLAGS=\"-D warnings\" cargo test:*)"
+    ]
+  }
+}

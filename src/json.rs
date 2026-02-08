@@ -1,9 +1,15 @@
+#[allow(deprecated)]
 use crate::formatter::StaticDataFormatter;
+use crate::formatter::{RecordFormatter, ValueFormatter};
 use serde_json::{Value as JsonValue, json};
-use wp_model_core::model::{DataField, DataRecord, DataType, Value, types::value::ObjectValue, data::record::RecordItem, FieldStorage};
+use wp_model_core::model::{
+    DataRecord, DataType, FieldStorage, Value, data::record::RecordItem, types::value::ObjectValue,
+};
 
 #[derive(Debug, Default)]
 pub struct Json;
+
+#[allow(deprecated)]
 impl StaticDataFormatter for Json {
     type Output = String;
     fn stdfmt_null() -> String {
@@ -44,7 +50,7 @@ impl StaticDataFormatter for Json {
         }
         json!(json_obj).to_string()
     }
-    fn stdfmt_array(value: &[DataField]) -> String {
+    fn stdfmt_array(value: &[FieldStorage]) -> String {
         let items: Vec<String> = value
             .iter()
             .map(|field| match field.get_value() {
@@ -78,6 +84,7 @@ impl StaticDataFormatter for Json {
     }
 }
 
+#[allow(deprecated)]
 impl crate::formatter::DataFormat for Json {
     type Output = String;
     fn format_null(&self) -> String {
@@ -104,7 +111,7 @@ impl crate::formatter::DataFormat for Json {
     fn format_object(&self, v: &ObjectValue) -> String {
         Self::stdfmt_object(v)
     }
-    fn format_array(&self, v: &[DataField]) -> String {
+    fn format_array(&self, v: &[FieldStorage]) -> String {
         Self::stdfmt_array(v)
     }
     fn format_field(&self, f: &FieldStorage) -> String {
@@ -150,11 +157,13 @@ fn to_json_value(value: &Value) -> JsonValue {
 }
 
 #[cfg(test)]
+#[allow(deprecated)]
 mod tests {
     use super::*;
     use crate::formatter::DataFormat;
     use std::net::IpAddr;
     use std::str::FromStr;
+    use wp_model_core::model::DataField;
 
     #[test]
     fn test_json_stdfmt_null() {
@@ -280,11 +289,85 @@ mod tests {
     #[test]
     fn test_json_stdfmt_array() {
         let arr = vec![
-            DataField::from_digit("", 1),
-            DataField::from_digit("", 2),
-            DataField::from_digit("", 3),
+            FieldStorage::Owned(DataField::from_digit("", 1)),
+            FieldStorage::Owned(DataField::from_digit("", 2)),
+            FieldStorage::Owned(DataField::from_digit("", 3)),
         ];
         let result = Json::stdfmt_array(&arr);
         assert_eq!(result, "[1,2,3]");
+    }
+}
+
+// ============================================================================
+// 新 trait 实现：ValueFormatter + RecordFormatter
+// ============================================================================
+
+#[allow(clippy::items_after_test_module)]
+impl ValueFormatter for Json {
+    type Output = String;
+
+    fn format_value(&self, value: &Value) -> String {
+        match value {
+            Value::Null => "null".to_string(),
+            Value::Bool(v) => json!(v).to_string(),
+            Value::Chars(v) => serde_json::to_string(v).unwrap_or_else(|_| "\"\"".to_string()),
+            Value::Digit(v) => json!(v).to_string(),
+            Value::Float(v) => {
+                if v.is_nan() {
+                    "null".to_string()
+                } else if v.is_infinite() {
+                    if v.is_sign_positive() {
+                        "\"Infinity\"".to_string()
+                    } else {
+                        "\"-Infinity\"".to_string()
+                    }
+                } else {
+                    json!(v).to_string()
+                }
+            }
+            Value::IpAddr(v) => json!(v.to_string()).to_string(),
+            Value::Time(v) => json!(v.to_string()).to_string(),
+            Value::Obj(v) => {
+                let mut json_obj = serde_json::Map::new();
+                for (k, field) in v.iter() {
+                    json_obj.insert(k.to_string(), to_json_value(field.get_value()));
+                }
+                json!(json_obj).to_string()
+            }
+            Value::Array(v) => {
+                let items: Vec<String> = v
+                    .iter()
+                    .map(|field| self.format_value(field.get_value()))
+                    .collect();
+                format!("[{}]", items.join(","))
+            }
+            _ => json!(value.to_string()).to_string(),
+        }
+    }
+}
+
+impl RecordFormatter for Json {
+    fn fmt_field(&self, field: &FieldStorage) -> String {
+        if field.get_name().is_empty() {
+            self.format_value(field.get_value())
+        } else {
+            format!(
+                "\"{}\":{}",
+                field.get_name(),
+                self.format_value(field.get_value())
+            )
+        }
+    }
+
+    fn fmt_record(&self, record: &DataRecord) -> String {
+        let mut items = Vec::new();
+        for field in record
+            .items
+            .iter()
+            .filter(|f| *f.get_meta() != DataType::Ignore)
+        {
+            items.push(self.fmt_field(field));
+        }
+        format!("{{{}}}", items.join(","))
     }
 }

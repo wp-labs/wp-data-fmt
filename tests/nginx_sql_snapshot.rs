@@ -1,3 +1,4 @@
+#![allow(deprecated)]
 use chrono::NaiveDateTime;
 use std::net::{IpAddr, Ipv4Addr};
 use wp_data_fmt::{DataFormat, SqlInsert};
@@ -17,7 +18,10 @@ fn nginx_access_log_sql_insert_snapshot() {
         items: vec![
             FieldStorage::Owned(DataField::from_ip("ip", ip)),
             FieldStorage::Owned(DataField::from_time("time", ts)),
-            FieldStorage::Owned(DataField::from_chars("http/request", "GET /nginx-logo.png HTTP/1.1")),
+            FieldStorage::Owned(DataField::from_chars(
+                "http/request",
+                "GET /nginx-logo.png HTTP/1.1",
+            )),
             FieldStorage::Owned(DataField::from_digit("http/status", 200)),
             FieldStorage::Owned(DataField::from_digit("length", 368)),
             FieldStorage::Owned(DataField::from_chars("chars", "http://119.122.1.4/")),
@@ -77,13 +81,19 @@ fn sql_batch_insert_snapshot() {
         DataRecord {
             id: Default::default(),
             items: vec![
-                FieldStorage::Owned(DataField::from_ip("ip", IpAddr::V4(Ipv4Addr::new(192, 168, 1, 2)))),
+                FieldStorage::Owned(DataField::from_ip(
+                    "ip",
+                    IpAddr::V4(Ipv4Addr::new(192, 168, 1, 2)),
+                )),
                 FieldStorage::Owned(DataField::from_time(
                     "time",
                     NaiveDateTime::parse_from_str("2019-08-06 12:12:19", "%Y-%m-%d %H:%M:%S")
                         .unwrap(),
                 )),
-                FieldStorage::Owned(DataField::from_chars("http/request", "GET /nginx-logo.png HTTP/1.1")),
+                FieldStorage::Owned(DataField::from_chars(
+                    "http/request",
+                    "GET /nginx-logo.png HTTP/1.1",
+                )),
                 FieldStorage::Owned(DataField::from_digit("http/status", 200)),
                 FieldStorage::Owned(DataField::from_digit("length", 368)),
                 FieldStorage::Owned(DataField::from_chars("chars", "http://119.122.1.4/")),
@@ -94,7 +104,10 @@ fn sql_batch_insert_snapshot() {
         DataRecord {
             id: Default::default(),
             items: vec![
-                FieldStorage::Owned(DataField::from_ip("ip", IpAddr::V4(Ipv4Addr::new(10, 0, 0, 1)))),
+                FieldStorage::Owned(DataField::from_ip(
+                    "ip",
+                    IpAddr::V4(Ipv4Addr::new(10, 0, 0, 1)),
+                )),
                 FieldStorage::Owned(DataField::from_time(
                     "time",
                     NaiveDateTime::parse_from_str("2019-08-06 12:13:00", "%Y-%m-%d %H:%M:%S")
@@ -122,7 +135,10 @@ fn sql_generate_create_table_snapshot() {
     let record = DataRecord {
         id: Default::default(),
         items: vec![
-            FieldStorage::Owned(DataField::from_ip("ip", IpAddr::V4(Ipv4Addr::new(10, 0, 0, 1)))),
+            FieldStorage::Owned(DataField::from_ip(
+                "ip",
+                IpAddr::V4(Ipv4Addr::new(10, 0, 0, 1)),
+            )),
             FieldStorage::Owned(DataField::from_time(
                 "time",
                 NaiveDateTime::parse_from_str("2019-08-06 12:13:00", "%Y-%m-%d %H:%M:%S").unwrap(),
