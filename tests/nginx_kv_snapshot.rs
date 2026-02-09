@@ -13,20 +13,20 @@ fn nginx_access_log_kv_snapshot() {
     let record = DataRecord {
         id: Default::default(),
         items: vec![
-            FieldStorage::Owned(DataField::from_ip("ip", ip)),
-            FieldStorage::Owned(DataField::from_time("time", ts)),
-            FieldStorage::Owned(DataField::from_chars(
+            FieldStorage::from_owned(DataField::from_ip("ip", ip)),
+            FieldStorage::from_owned(DataField::from_time("time", ts)),
+            FieldStorage::from_owned(DataField::from_chars(
                 "http/request",
                 "GET /nginx-logo.png HTTP/1.1",
             )),
-            FieldStorage::Owned(DataField::from_digit("http/status", 200)),
-            FieldStorage::Owned(DataField::from_digit("length", 368)),
-            FieldStorage::Owned(DataField::from_chars("chars", "http://119.122.1.4/")),
-            FieldStorage::Owned(DataField::from_chars(
+            FieldStorage::from_owned(DataField::from_digit("http/status", 200)),
+            FieldStorage::from_owned(DataField::from_digit("length", 368)),
+            FieldStorage::from_owned(DataField::from_chars("chars", "http://119.122.1.4/")),
+            FieldStorage::from_owned(DataField::from_chars(
                 "http/agent",
                 "Mozilla/5.0(Macintosh; Intel Mac OS X 10_14_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36 ",
             )),
-            FieldStorage::Owned(DataField::from_chars("src_key", "_")),
+            FieldStorage::from_owned(DataField::from_chars("src_key", "_")),
         ],
     };
 

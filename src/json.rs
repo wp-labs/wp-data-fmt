@@ -3,7 +3,7 @@ use crate::formatter::StaticDataFormatter;
 use crate::formatter::{RecordFormatter, ValueFormatter};
 use serde_json::{Value as JsonValue, json};
 use wp_model_core::model::{
-    DataRecord, DataType, FieldStorage, Value, data::record::RecordItem, types::value::ObjectValue,
+    DataRecord, DataType, FieldStorage, Value, types::value::ObjectValue,
 };
 
 #[derive(Debug, Default)]
@@ -45,8 +45,8 @@ impl StaticDataFormatter for Json {
     }
     fn stdfmt_object(value: &ObjectValue) -> String {
         let mut json_obj = serde_json::Map::new();
-        for (k, v) in value.iter() {
-            json_obj.insert(k.to_string(), to_json_value(v.get_value()));
+        for (_k, v) in value.iter() {
+            json_obj.insert(v.get_name().to_string(), to_json_value(v.get_value()));
         }
         json!(json_obj).to_string()
     }
@@ -144,8 +144,8 @@ fn to_json_value(value: &Value) -> JsonValue {
         Value::Time(v) => JsonValue::String(v.to_string()),
         Value::Obj(v) => {
             let mut map = serde_json::Map::new();
-            for (k, field) in v.iter() {
-                map.insert(k.to_string(), to_json_value(field.get_value()));
+            for (_k, field) in v.iter() {
+                map.insert(field.get_name().to_string(), to_json_value(field.get_value()));
             }
             JsonValue::Object(map)
         }
@@ -226,14 +226,14 @@ mod tests {
 
     #[test]
     fn test_json_stdfmt_field_with_name() {
-        let field = FieldStorage::Owned(DataField::from_chars("name", "Alice"));
+        let field = FieldStorage::from_owned(DataField::from_chars("name", "Alice"));
         let result = Json::stdfmt_field(&field);
         assert_eq!(result, "\"name\":\"Alice\"");
     }
 
     #[test]
     fn test_json_stdfmt_field_without_name() {
-        let field = FieldStorage::Owned(DataField::from_chars("", "value"));
+        let field = FieldStorage::from_owned(DataField::from_chars("", "value"));
         let result = Json::stdfmt_field(&field);
         assert_eq!(result, "\"value\"");
     }
@@ -243,8 +243,8 @@ mod tests {
         let record = DataRecord {
             id: Default::default(),
             items: vec![
-                FieldStorage::Owned(DataField::from_chars("name", "Alice")),
-                FieldStorage::Owned(DataField::from_digit("age", 30)),
+                FieldStorage::from_owned(DataField::from_chars("name", "Alice")),
+                FieldStorage::from_owned(DataField::from_digit("age", 30)),
             ],
         };
         let result = Json::stdfmt_record(&record);
@@ -289,9 +289,9 @@ mod tests {
     #[test]
     fn test_json_stdfmt_array() {
         let arr = vec![
-            FieldStorage::Owned(DataField::from_digit("", 1)),
-            FieldStorage::Owned(DataField::from_digit("", 2)),
-            FieldStorage::Owned(DataField::from_digit("", 3)),
+            FieldStorage::from_owned(DataField::from_digit("", 1)),
+            FieldStorage::from_owned(DataField::from_digit("", 2)),
+            FieldStorage::from_owned(DataField::from_digit("", 3)),
         ];
         let result = Json::stdfmt_array(&arr);
         assert_eq!(result, "[1,2,3]");
@@ -329,8 +329,8 @@ impl ValueFormatter for Json {
             Value::Time(v) => json!(v.to_string()).to_string(),
             Value::Obj(v) => {
                 let mut json_obj = serde_json::Map::new();
-                for (k, field) in v.iter() {
-                    json_obj.insert(k.to_string(), to_json_value(field.get_value()));
+                for (_k, field) in v.iter() {
+                    json_obj.insert(field.get_name().to_string(), to_json_value(field.get_value()));
                 }
                 json!(json_obj).to_string()
             }

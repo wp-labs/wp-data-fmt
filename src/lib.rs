@@ -194,8 +194,8 @@ mod tests {
         let record = DataRecord {
             id: Default::default(),
             items: vec![
-                FieldStorage::Owned(DataField::from_chars("name", "Alice")),
-                FieldStorage::Owned(DataField::from_digit("age", 30)),
+                FieldStorage::from_owned(DataField::from_chars("name", "Alice")),
+                FieldStorage::from_owned(DataField::from_digit("age", 30)),
             ],
         };
         let result = json_fmt.fmt_record(&record);
@@ -207,7 +207,7 @@ mod tests {
     #[test]
     fn test_format_type_format_field() {
         let fmt = FormatType::from(&TextFmt::Json);
-        let field = FieldStorage::Owned(DataField::from_chars("key", "value"));
+        let field = FieldStorage::from_owned(DataField::from_chars("key", "value"));
         let result = fmt.fmt_field(&field);
         assert!(result.contains("key"));
         assert!(result.contains("value"));
@@ -219,8 +219,8 @@ mod tests {
         let record = DataRecord {
             id: Default::default(),
             items: vec![
-                FieldStorage::Owned(DataField::from_chars("a", "x")),
-                FieldStorage::Owned(DataField::from_chars("b", "y")),
+                FieldStorage::from_owned(DataField::from_chars("a", "x")),
+                FieldStorage::from_owned(DataField::from_chars("b", "y")),
             ],
         };
         let result = csv_fmt.fmt_record(&record);
@@ -232,7 +232,7 @@ mod tests {
         let kv_fmt = FormatType::from(&TextFmt::Kv);
         let record = DataRecord {
             id: Default::default(),
-            items: vec![FieldStorage::Owned(DataField::from_chars("name", "Alice"))],
+            items: vec![FieldStorage::from_owned(DataField::from_chars("name", "Alice"))],
         };
         let result = kv_fmt.fmt_record(&record);
         assert!(result.contains("name"));

@@ -1,4 +1,3 @@
-use wp_model_core::model::data::record::RecordItem;
 use wp_model_core::model::{DataRecord, FieldStorage, Value, types::value::ObjectValue};
 
 use crate::{FormatType, SqlFormat};

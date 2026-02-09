@@ -3,7 +3,7 @@ use crate::formatter::DataFormat;
 use crate::formatter::{RecordFormatter, ValueFormatter};
 use std::fmt::Write;
 use wp_model_core::model::{
-    DataRecord, DataType, FieldStorage, data::record::RecordItem, types::value::ObjectValue,
+    DataRecord, DataType, FieldStorage, types::value::ObjectValue,
 };
 
 pub struct Csv {
@@ -87,11 +87,11 @@ impl DataFormat for Csv {
     }
     fn format_object(&self, value: &ObjectValue) -> String {
         let mut output = String::new();
-        for (i, (k, v)) in value.iter().enumerate() {
+        for (i, (_k, v)) in value.iter().enumerate() {
             if i > 0 {
                 output.push_str(", ");
             }
-            write!(output, "{}:{}", k, self.fmt_value(v.get_value())).unwrap();
+            write!(output, "{}:{}", v.get_name(), self.fmt_value(v.get_value())).unwrap();
         }
         output
     }
@@ -246,8 +246,8 @@ mod tests {
         let record = DataRecord {
             id: Default::default(),
             items: vec![
-                FieldStorage::Owned(DataField::from_chars("name", "Alice")),
-                FieldStorage::Owned(DataField::from_digit("age", 30)),
+                FieldStorage::from_owned(DataField::from_chars("name", "Alice")),
+                FieldStorage::from_owned(DataField::from_digit("age", 30)),
             ],
         };
         let result = csv.format_record(&record);
@@ -260,8 +260,8 @@ mod tests {
         let record = DataRecord {
             id: Default::default(),
             items: vec![
-                FieldStorage::Owned(DataField::from_chars("a", "x")),
-                FieldStorage::Owned(DataField::from_chars("b", "y")),
+                FieldStorage::from_owned(DataField::from_chars("a", "x")),
+                FieldStorage::from_owned(DataField::from_chars("b", "y")),
             ],
         };
         let result = csv.format_record(&record);
@@ -274,8 +274,8 @@ mod tests {
         let record = DataRecord {
             id: Default::default(),
             items: vec![
-                FieldStorage::Owned(DataField::from_chars("msg", "hello,world")),
-                FieldStorage::Owned(DataField::from_digit("count", 5)),
+                FieldStorage::from_owned(DataField::from_chars("msg", "hello,world")),
+                FieldStorage::from_owned(DataField::from_digit("count", 5)),
             ],
         };
         let result = csv.format_record(&record);
@@ -315,11 +315,11 @@ impl ValueFormatter for Csv {
             }
             Value::Obj(v) => {
                 let mut output = String::new();
-                for (i, (k, field)) in v.iter().enumerate() {
+                for (i, (_k, field)) in v.iter().enumerate() {
                     if i > 0 {
                         output.push_str(", ");
                     }
-                    write!(output, "{}:{}", k, self.format_value(field.get_value())).unwrap();
+                    write!(output, "{}:{}", field.get_name(), self.format_value(field.get_value())).unwrap();
                 }
                 output
             }

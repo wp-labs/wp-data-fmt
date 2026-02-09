@@ -2,7 +2,7 @@
 use crate::formatter::DataFormat;
 use crate::formatter::{RecordFormatter, ValueFormatter};
 use wp_model_core::model::types::value::ObjectValue;
-use wp_model_core::model::{DataRecord, DataType, FieldStorage, Value, data::record::RecordItem};
+use wp_model_core::model::{DataRecord, DataType, FieldStorage, Value};
 
 #[derive(Debug, Default)]
 pub struct Raw;
@@ -43,7 +43,7 @@ impl DataFormat for Raw {
         }
         let segments: Vec<String> = value
             .iter()
-            .map(|(k, v)| format!("{}={}", k, self.fmt_value(v.get_value())))
+            .map(|(_k, v)| format!("{}={}", v.get_name(), self.fmt_value(v.get_value())))
             .collect();
         format!("{{{}}}", segments.join(", "))
     }
@@ -156,7 +156,7 @@ mod tests {
     #[test]
     fn test_format_field_chars() {
         let raw = Raw;
-        let field = FieldStorage::Owned(DataField::from_chars("name", "Alice"));
+        let field = FieldStorage::from_owned(DataField::from_chars("name", "Alice"));
         let result = raw.format_field(&field);
         assert_eq!(result, "Alice");
     }
@@ -164,7 +164,7 @@ mod tests {
     #[test]
     fn test_format_field_digit() {
         let raw = Raw;
-        let field = FieldStorage::Owned(DataField::from_digit("age", 30));
+        let field = FieldStorage::from_owned(DataField::from_digit("age", 30));
         let result = raw.format_field(&field);
         assert_eq!(result, "30");
     }
@@ -175,8 +175,8 @@ mod tests {
         let record = DataRecord {
             id: Default::default(),
             items: vec![
-                FieldStorage::Owned(DataField::from_chars("name", "Alice")),
-                FieldStorage::Owned(DataField::from_digit("age", 30)),
+                FieldStorage::from_owned(DataField::from_chars("name", "Alice")),
+                FieldStorage::from_owned(DataField::from_digit("age", 30)),
             ],
         };
         let result = raw.format_record(&record);
@@ -194,9 +194,9 @@ mod tests {
     fn test_format_array_with_values() {
         let raw = Raw;
         let arr = vec![
-            FieldStorage::Owned(DataField::from_digit("", 1)),
-            FieldStorage::Owned(DataField::from_digit("", 2)),
-            FieldStorage::Owned(DataField::from_digit("", 3)),
+            FieldStorage::from_owned(DataField::from_digit("", 1)),
+            FieldStorage::from_owned(DataField::from_digit("", 2)),
+            FieldStorage::from_owned(DataField::from_digit("", 3)),
         ];
         let result = raw.format_array(&arr);
         assert_eq!(result, "[1, 2, 3]");
@@ -233,7 +233,7 @@ impl ValueFormatter for Raw {
                 } else {
                     let segments: Vec<String> = obj
                         .iter()
-                        .map(|(k, field)| format!("{}={}", k, self.format_value(field.get_value())))
+                        .map(|(_k, field)| format!("{}={}", field.get_name(), self.format_value(field.get_value())))
                         .collect();
                     format!("{{{}}}", segments.join(", "))
                 }

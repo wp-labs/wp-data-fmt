@@ -118,8 +118,8 @@ fn main() {
     let record = DataRecord {
         id: Default::default(),
         items: vec![
-            FieldStorage::Owned(DataField::from_chars("name", "Alice")),
-            FieldStorage::Owned(DataField::from_digit("age", 30)),
+            FieldStorage::from_owned(DataField::from_chars("name", "Alice")),
+            FieldStorage::from_owned(DataField::from_digit("age", 30)),
         ],
     };
 

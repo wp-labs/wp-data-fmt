@@ -3,7 +3,7 @@ use crate::formatter::DataFormat;
 use crate::formatter::{RecordFormatter, ValueFormatter};
 use std::fmt::Write;
 use wp_model_core::model::{
-    DataRecord, DataType, FieldStorage, data::record::RecordItem, types::value::ObjectValue,
+    DataRecord, DataType, FieldStorage, types::value::ObjectValue,
 };
 
 pub struct KeyValue {
@@ -77,14 +77,14 @@ impl DataFormat for KeyValue {
     fn format_object(&self, value: &ObjectValue) -> String {
         let mut output = String::new();
         output.push('{');
-        for (i, (k, v)) in value.iter().enumerate() {
+        for (i, (_k, v)) in value.iter().enumerate() {
             if i > 0 {
                 output.push_str(&self.pair_separator);
             }
             write!(
                 output,
                 "{}{}{}",
-                self.format_string(k),
+                self.format_string(v.get_name()),
                 self.key_value_separator,
                 self.fmt_value(v.get_value())
             )
@@ -226,7 +226,7 @@ mod tests {
     #[test]
     fn test_format_field() {
         let kv = KeyValue::default();
-        let field = FieldStorage::Owned(DataField::from_chars("name", "Alice"));
+        let field = FieldStorage::from_owned(DataField::from_chars("name", "Alice"));
         let result = kv.format_field(&field);
         assert_eq!(result, "name: \"Alice\"");
     }
@@ -234,7 +234,7 @@ mod tests {
     #[test]
     fn test_format_field_with_custom_separator() {
         let kv = KeyValue::new().with_key_value_separator("=");
-        let field = FieldStorage::Owned(DataField::from_digit("age", 30));
+        let field = FieldStorage::from_owned(DataField::from_digit("age", 30));
         let result = kv.format_field(&field);
         assert_eq!(result, "age=30");
     }
@@ -245,8 +245,8 @@ mod tests {
         let record = DataRecord {
             id: Default::default(),
             items: vec![
-                FieldStorage::Owned(DataField::from_chars("name", "Alice")),
-                FieldStorage::Owned(DataField::from_digit("age", 30)),
+                FieldStorage::from_owned(DataField::from_chars("name", "Alice")),
+                FieldStorage::from_owned(DataField::from_digit("age", 30)),
             ],
         };
         let result = kv.format_record(&record);
@@ -264,8 +264,8 @@ mod tests {
         let record = DataRecord {
             id: Default::default(),
             items: vec![
-                FieldStorage::Owned(DataField::from_chars("a", "x")),
-                FieldStorage::Owned(DataField::from_chars("b", "y")),
+                FieldStorage::from_owned(DataField::from_chars("a", "x")),
+                FieldStorage::from_owned(DataField::from_chars("b", "y")),
             ],
         };
         let result = kv.format_record(&record);
@@ -276,8 +276,8 @@ mod tests {
     fn test_format_array() {
         let kv = KeyValue::default();
         let arr = vec![
-            FieldStorage::Owned(DataField::from_digit("", 1)),
-            FieldStorage::Owned(DataField::from_digit("", 2)),
+            FieldStorage::from_owned(DataField::from_digit("", 1)),
+            FieldStorage::from_owned(DataField::from_digit("", 2)),
         ];
         let result = kv.format_array(&arr);
         assert!(result.starts_with('['));
@@ -308,14 +308,14 @@ impl ValueFormatter for KeyValue {
             Value::Obj(obj) => {
                 let mut output = String::new();
                 output.push('{');
-                for (i, (k, field)) in obj.iter().enumerate() {
+                for (i, (_k, field)) in obj.iter().enumerate() {
                     if i > 0 {
                         output.push_str(&self.pair_separator);
                     }
                     write!(
                         output,
                         "{}{}{}",
-                        self.format_string_value(k),
+                        self.format_string_value(field.get_name()),
                         self.key_value_separator,
                         self.format_value(field.get_value())
                     )

@@ -2,7 +2,7 @@
 use crate::formatter::DataFormat;
 use crate::formatter::{RecordFormatter, ValueFormatter};
 use wp_model_core::model::{
-    DataRecord, DataType, FieldStorage, Value, data::record::RecordItem, types::value::ObjectValue,
+    DataRecord, DataType, FieldStorage, Value, types::value::ObjectValue,
 };
 
 #[derive(Default)]
@@ -40,8 +40,8 @@ impl DataFormat for ProtoTxt {
     }
     fn format_object(&self, value: &ObjectValue) -> String {
         let mut out = String::new();
-        for (k, v) in value.iter() {
-            out.push_str(&format!("{}: {}\n", k, self.fmt_value(v.get_value())));
+        for (_k, v) in value.iter() {
+            out.push_str(&format!("{}: {}\n", v.get_name(), self.fmt_value(v.get_value())));
         }
         out
     }
@@ -164,7 +164,7 @@ mod tests {
     #[test]
     fn test_format_field() {
         let proto = ProtoTxt;
-        let field = FieldStorage::Owned(DataField::from_chars("name", "Alice"));
+        let field = FieldStorage::from_owned(DataField::from_chars("name", "Alice"));
         let result = proto.format_field(&field);
         assert_eq!(result, "name: \"Alice\"");
     }
@@ -172,7 +172,7 @@ mod tests {
     #[test]
     fn test_format_field_digit() {
         let proto = ProtoTxt;
-        let field = FieldStorage::Owned(DataField::from_digit("age", 30));
+        let field = FieldStorage::from_owned(DataField::from_digit("age", 30));
         let result = proto.format_field(&field);
         assert_eq!(result, "age: 30");
     }
@@ -183,8 +183,8 @@ mod tests {
         let record = DataRecord {
             id: Default::default(),
             items: vec![
-                FieldStorage::Owned(DataField::from_chars("name", "Alice")),
-                FieldStorage::Owned(DataField::from_digit("age", 30)),
+                FieldStorage::from_owned(DataField::from_chars("name", "Alice")),
+                FieldStorage::from_owned(DataField::from_digit("age", 30)),
             ],
         };
         let result = proto.format_record(&record);
@@ -198,8 +198,8 @@ mod tests {
     fn test_format_array() {
         let proto = ProtoTxt;
         let arr = vec![
-            FieldStorage::Owned(DataField::from_digit("x", 1)),
-            FieldStorage::Owned(DataField::from_digit("y", 2)),
+            FieldStorage::from_owned(DataField::from_digit("x", 1)),
+            FieldStorage::from_owned(DataField::from_digit("y", 2)),
         ];
         let result = proto.format_array(&arr);
         assert!(result.starts_with('['));
@@ -226,10 +226,10 @@ impl ValueFormatter for ProtoTxt {
             Value::Time(v) => format!("\"{}\"", v),
             Value::Obj(obj) => {
                 let mut out = String::new();
-                for (k, field) in obj.iter() {
+                for (_k, field) in obj.iter() {
                     out.push_str(&format!(
                         "{}: {}\n",
-                        k,
+                        field.get_name(),
                         self.format_value(field.get_value())
                     ));
                 }
