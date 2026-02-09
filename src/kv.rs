@@ -2,9 +2,7 @@
 use crate::formatter::DataFormat;
 use crate::formatter::{RecordFormatter, ValueFormatter};
 use std::fmt::Write;
-use wp_model_core::model::{
-    DataRecord, DataType, FieldStorage, types::value::ObjectValue,
-};
+use wp_model_core::model::{DataRecord, DataType, FieldStorage, types::value::ObjectValue};
 
 pub struct KeyValue {
     pair_separator: String,

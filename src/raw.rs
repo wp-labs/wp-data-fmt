@@ -42,8 +42,8 @@ impl DataFormat for Raw {
             return "{}".to_string();
         }
         let segments: Vec<String> = value
-            .iter()
-            .map(|(_k, v)| format!("{}={}", v.get_name(), self.fmt_value(v.get_value())))
+            .values()
+            .map(|v| format!("{}={}", v.get_name(), self.fmt_value(v.get_value())))
             .collect();
         format!("{{{}}}", segments.join(", "))
     }
@@ -232,8 +232,14 @@ impl ValueFormatter for Raw {
                     "{}".to_string()
                 } else {
                     let segments: Vec<String> = obj
-                        .iter()
-                        .map(|(_k, field)| format!("{}={}", field.get_name(), self.format_value(field.get_value())))
+                        .values()
+                        .map(|field| {
+                            format!(
+                                "{}={}",
+                                field.get_name(),
+                                self.format_value(field.get_value())
+                            )
+                        })
                         .collect();
                     format!("{{{}}}", segments.join(", "))
                 }

@@ -2,9 +2,7 @@
 use crate::formatter::StaticDataFormatter;
 use crate::formatter::{RecordFormatter, ValueFormatter};
 use serde_json::{Value as JsonValue, json};
-use wp_model_core::model::{
-    DataRecord, DataType, FieldStorage, Value, types::value::ObjectValue,
-};
+use wp_model_core::model::{DataRecord, DataType, FieldStorage, Value, types::value::ObjectValue};
 
 #[derive(Debug, Default)]
 pub struct Json;
@@ -145,7 +143,10 @@ fn to_json_value(value: &Value) -> JsonValue {
         Value::Obj(v) => {
             let mut map = serde_json::Map::new();
             for (_k, field) in v.iter() {
-                map.insert(field.get_name().to_string(), to_json_value(field.get_value()));
+                map.insert(
+                    field.get_name().to_string(),
+                    to_json_value(field.get_value()),
+                );
             }
             JsonValue::Object(map)
         }
@@ -330,7 +331,10 @@ impl ValueFormatter for Json {
             Value::Obj(v) => {
                 let mut json_obj = serde_json::Map::new();
                 for (_k, field) in v.iter() {
-                    json_obj.insert(field.get_name().to_string(), to_json_value(field.get_value()));
+                    json_obj.insert(
+                        field.get_name().to_string(),
+                        to_json_value(field.get_value()),
+                    );
                 }
                 json!(json_obj).to_string()
             }

@@ -57,7 +57,9 @@ fn test_new_api_kv() {
     // 测试 fmt_record
     let record = DataRecord {
         id: Default::default(),
-        items: vec![FieldStorage::from_owned(DataField::from_chars("key", "value"))],
+        items: vec![FieldStorage::from_owned(DataField::from_chars(
+            "key", "value",
+        ))],
     };
     let result = kv.fmt_record(&record);
     assert!(result.contains("key"));

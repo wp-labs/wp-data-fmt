@@ -2,9 +2,7 @@
 use crate::formatter::DataFormat;
 use crate::formatter::{RecordFormatter, ValueFormatter};
 use std::fmt::Write;
-use wp_model_core::model::{
-    DataRecord, DataType, FieldStorage, types::value::ObjectValue,
-};
+use wp_model_core::model::{DataRecord, DataType, FieldStorage, types::value::ObjectValue};
 
 pub struct Csv {
     delimiter: char,
@@ -319,7 +317,13 @@ impl ValueFormatter for Csv {
                     if i > 0 {
                         output.push_str(", ");
                     }
-                    write!(output, "{}:{}", field.get_name(), self.format_value(field.get_value())).unwrap();
+                    write!(
+                        output,
+                        "{}:{}",
+                        field.get_name(),
+                        self.format_value(field.get_value())
+                    )
+                    .unwrap();
                 }
                 output
             }

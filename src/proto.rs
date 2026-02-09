@@ -1,9 +1,7 @@
 #[allow(deprecated)]
 use crate::formatter::DataFormat;
 use crate::formatter::{RecordFormatter, ValueFormatter};
-use wp_model_core::model::{
-    DataRecord, DataType, FieldStorage, Value, types::value::ObjectValue,
-};
+use wp_model_core::model::{DataRecord, DataType, FieldStorage, Value, types::value::ObjectValue};
 
 #[derive(Default)]
 pub struct ProtoTxt;
@@ -41,7 +39,11 @@ impl DataFormat for ProtoTxt {
     fn format_object(&self, value: &ObjectValue) -> String {
         let mut out = String::new();
         for (_k, v) in value.iter() {
-            out.push_str(&format!("{}: {}\n", v.get_name(), self.fmt_value(v.get_value())));
+            out.push_str(&format!(
+                "{}: {}\n",
+                v.get_name(),
+                self.fmt_value(v.get_value())
+            ));
         }
         out
     }

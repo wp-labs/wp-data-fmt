@@ -88,7 +88,8 @@ fn test_deeply_nested_object_cur_name() {
     inner_obj.insert("inner_key", inner_field);
 
     // Create outer object containing inner object
-    let mut outer_field = FieldStorage::from_owned(DataField::from_obj("outer_original", inner_obj));
+    let mut outer_field =
+        FieldStorage::from_owned(DataField::from_obj("outer_original", inner_obj));
     outer_field.set_name("outer_display");
 
     let mut outer_obj = ObjectValue::new();
@@ -144,4 +145,3 @@ fn test_record_with_nested_object_cur_name() {
     assert!(kv_output.contains("nested_renamed"));
     assert!(raw_output.contains("nested_renamed"));
 }
-

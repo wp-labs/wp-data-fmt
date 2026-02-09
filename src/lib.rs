@@ -232,7 +232,9 @@ mod tests {
         let kv_fmt = FormatType::from(&TextFmt::Kv);
         let record = DataRecord {
             id: Default::default(),
-            items: vec![FieldStorage::from_owned(DataField::from_chars("name", "Alice"))],
+            items: vec![FieldStorage::from_owned(DataField::from_chars(
+                "name", "Alice",
+            ))],
         };
         let result = kv_fmt.fmt_record(&record);
         assert!(result.contains("name"));

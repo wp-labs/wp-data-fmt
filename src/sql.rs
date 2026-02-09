@@ -2,9 +2,7 @@
 use crate::formatter::DataFormat;
 use crate::formatter::{RecordFormatter, ValueFormatter};
 use wp_model_core::model::fmt_def::TextFmt;
-use wp_model_core::model::{
-    DataRecord, DataType, FieldStorage, Value, types::value::ObjectValue,
-};
+use wp_model_core::model::{DataRecord, DataType, FieldStorage, Value, types::value::ObjectValue};
 
 pub struct SqlInsert {
     pub table_name: String,
