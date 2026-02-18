@@ -16,20 +16,20 @@ fn nginx_access_log_sql_insert_snapshot() {
     let record = DataRecord {
         id: Default::default(),
         items: vec![
-            FieldStorage::Owned(DataField::from_ip("ip", ip)),
-            FieldStorage::Owned(DataField::from_time("time", ts)),
-            FieldStorage::Owned(DataField::from_chars(
+            FieldStorage::from_owned(DataField::from_ip("ip", ip)),
+            FieldStorage::from_owned(DataField::from_time("time", ts)),
+            FieldStorage::from_owned(DataField::from_chars(
                 "http/request",
                 "GET /nginx-logo.png HTTP/1.1",
             )),
-            FieldStorage::Owned(DataField::from_digit("http/status", 200)),
-            FieldStorage::Owned(DataField::from_digit("length", 368)),
-            FieldStorage::Owned(DataField::from_chars("chars", "http://119.122.1.4/")),
-            FieldStorage::Owned(DataField::from_chars(
+            FieldStorage::from_owned(DataField::from_digit("http/status", 200)),
+            FieldStorage::from_owned(DataField::from_digit("length", 368)),
+            FieldStorage::from_owned(DataField::from_chars("chars", "http://119.122.1.4/")),
+            FieldStorage::from_owned(DataField::from_chars(
                 "http/agent",
                 "Mozilla/5.0(Macintosh; Intel Mac OS X 10_14_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36 ",
             )),
-            FieldStorage::Owned(DataField::from_chars("src_key", "_")),
+            FieldStorage::from_owned(DataField::from_chars("src_key", "_")),
         ],
     };
 
@@ -46,8 +46,8 @@ fn sql_string_escape() {
     let record = DataRecord {
         id: Default::default(),
         items: vec![
-            FieldStorage::Owned(DataField::from_chars("msg", "O'Reilly")),
-            FieldStorage::Owned(DataField::from_digit("n", 1)),
+            FieldStorage::from_owned(DataField::from_chars("msg", "O'Reilly")),
+            FieldStorage::from_owned(DataField::from_digit("n", 1)),
         ],
     };
     let f = SqlInsert::new_with_json("t");
@@ -61,8 +61,8 @@ fn sql_upsert_quotes_conflict_columns() {
     let record = DataRecord {
         id: Default::default(),
         items: vec![
-            FieldStorage::Owned(DataField::from_chars("http/request", "GET /")),
-            FieldStorage::Owned(DataField::from_chars("user", "alice")),
+            FieldStorage::from_owned(DataField::from_chars("http/request", "GET /")),
+            FieldStorage::from_owned(DataField::from_chars("user", "alice")),
         ],
     };
 
@@ -81,44 +81,44 @@ fn sql_batch_insert_snapshot() {
         DataRecord {
             id: Default::default(),
             items: vec![
-                FieldStorage::Owned(DataField::from_ip(
+                FieldStorage::from_owned(DataField::from_ip(
                     "ip",
                     IpAddr::V4(Ipv4Addr::new(192, 168, 1, 2)),
                 )),
-                FieldStorage::Owned(DataField::from_time(
+                FieldStorage::from_owned(DataField::from_time(
                     "time",
                     NaiveDateTime::parse_from_str("2019-08-06 12:12:19", "%Y-%m-%d %H:%M:%S")
                         .unwrap(),
                 )),
-                FieldStorage::Owned(DataField::from_chars(
+                FieldStorage::from_owned(DataField::from_chars(
                     "http/request",
                     "GET /nginx-logo.png HTTP/1.1",
                 )),
-                FieldStorage::Owned(DataField::from_digit("http/status", 200)),
-                FieldStorage::Owned(DataField::from_digit("length", 368)),
-                FieldStorage::Owned(DataField::from_chars("chars", "http://119.122.1.4/")),
-                FieldStorage::Owned(DataField::from_chars("http/agent", "Mozilla/5.0")),
-                FieldStorage::Owned(DataField::from_chars("src_key", "_")),
+                FieldStorage::from_owned(DataField::from_digit("http/status", 200)),
+                FieldStorage::from_owned(DataField::from_digit("length", 368)),
+                FieldStorage::from_owned(DataField::from_chars("chars", "http://119.122.1.4/")),
+                FieldStorage::from_owned(DataField::from_chars("http/agent", "Mozilla/5.0")),
+                FieldStorage::from_owned(DataField::from_chars("src_key", "_")),
             ],
         },
         DataRecord {
             id: Default::default(),
             items: vec![
-                FieldStorage::Owned(DataField::from_ip(
+                FieldStorage::from_owned(DataField::from_ip(
                     "ip",
                     IpAddr::V4(Ipv4Addr::new(10, 0, 0, 1)),
                 )),
-                FieldStorage::Owned(DataField::from_time(
+                FieldStorage::from_owned(DataField::from_time(
                     "time",
                     NaiveDateTime::parse_from_str("2019-08-06 12:13:00", "%Y-%m-%d %H:%M:%S")
                         .unwrap(),
                 )),
-                FieldStorage::Owned(DataField::from_chars("http/request", "GET /health")),
-                FieldStorage::Owned(DataField::from_digit("http/status", 200)),
-                FieldStorage::Owned(DataField::from_digit("length", 0)),
-                FieldStorage::Owned(DataField::from_chars("chars", "")),
-                FieldStorage::Owned(DataField::from_chars("http/agent", "curl/7.64")),
-                FieldStorage::Owned(DataField::from_chars("src_key", "test")),
+                FieldStorage::from_owned(DataField::from_chars("http/request", "GET /health")),
+                FieldStorage::from_owned(DataField::from_digit("http/status", 200)),
+                FieldStorage::from_owned(DataField::from_digit("length", 0)),
+                FieldStorage::from_owned(DataField::from_chars("chars", "")),
+                FieldStorage::from_owned(DataField::from_chars("http/agent", "curl/7.64")),
+                FieldStorage::from_owned(DataField::from_chars("src_key", "test")),
             ],
         },
     ];
@@ -135,18 +135,18 @@ fn sql_generate_create_table_snapshot() {
     let record = DataRecord {
         id: Default::default(),
         items: vec![
-            FieldStorage::Owned(DataField::from_ip(
+            FieldStorage::from_owned(DataField::from_ip(
                 "ip",
                 IpAddr::V4(Ipv4Addr::new(10, 0, 0, 1)),
             )),
-            FieldStorage::Owned(DataField::from_time(
+            FieldStorage::from_owned(DataField::from_time(
                 "time",
                 NaiveDateTime::parse_from_str("2019-08-06 12:13:00", "%Y-%m-%d %H:%M:%S").unwrap(),
             )),
-            FieldStorage::Owned(DataField::from_chars("http/request", "GET /health")),
-            FieldStorage::Owned(DataField::from_digit("http/status", 200)),
-            FieldStorage::Owned(DataField::from_digit("length", 0)),
-            FieldStorage::Owned(DataField::from_chars("http/agent", "curl/7.64")),
+            FieldStorage::from_owned(DataField::from_chars("http/request", "GET /health")),
+            FieldStorage::from_owned(DataField::from_digit("http/status", 200)),
+            FieldStorage::from_owned(DataField::from_digit("length", 0)),
+            FieldStorage::from_owned(DataField::from_chars("http/agent", "curl/7.64")),
         ],
     };
 

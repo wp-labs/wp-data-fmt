@@ -2,9 +2,7 @@
 use crate::formatter::StaticDataFormatter;
 use crate::formatter::{RecordFormatter, ValueFormatter};
 use serde_json::{Value as JsonValue, json};
-use wp_model_core::model::{
-    DataRecord, DataType, FieldStorage, Value, data::record::RecordItem, types::value::ObjectValue,
-};
+use wp_model_core::model::{DataRecord, DataType, FieldStorage, Value, types::value::ObjectValue};
 
 #[derive(Debug, Default)]
 pub struct Json;
@@ -226,14 +224,14 @@ mod tests {
 
     #[test]
     fn test_json_stdfmt_field_with_name() {
-        let field = FieldStorage::Owned(DataField::from_chars("name", "Alice"));
+        let field = FieldStorage::from_owned(DataField::from_chars("name", "Alice"));
         let result = Json::stdfmt_field(&field);
         assert_eq!(result, "\"name\":\"Alice\"");
     }
 
     #[test]
     fn test_json_stdfmt_field_without_name() {
-        let field = FieldStorage::Owned(DataField::from_chars("", "value"));
+        let field = FieldStorage::from_owned(DataField::from_chars("", "value"));
         let result = Json::stdfmt_field(&field);
         assert_eq!(result, "\"value\"");
     }
@@ -243,8 +241,8 @@ mod tests {
         let record = DataRecord {
             id: Default::default(),
             items: vec![
-                FieldStorage::Owned(DataField::from_chars("name", "Alice")),
-                FieldStorage::Owned(DataField::from_digit("age", 30)),
+                FieldStorage::from_owned(DataField::from_chars("name", "Alice")),
+                FieldStorage::from_owned(DataField::from_digit("age", 30)),
             ],
         };
         let result = Json::stdfmt_record(&record);
@@ -289,12 +287,64 @@ mod tests {
     #[test]
     fn test_json_stdfmt_array() {
         let arr = vec![
-            FieldStorage::Owned(DataField::from_digit("", 1)),
-            FieldStorage::Owned(DataField::from_digit("", 2)),
-            FieldStorage::Owned(DataField::from_digit("", 3)),
+            FieldStorage::from_owned(DataField::from_digit("", 1)),
+            FieldStorage::from_owned(DataField::from_digit("", 2)),
+            FieldStorage::from_owned(DataField::from_digit("", 3)),
         ];
         let result = Json::stdfmt_array(&arr);
         assert_eq!(result, "[1,2,3]");
+    }
+
+    fn make_record_with_obj() -> DataRecord {
+        let mut obj = ObjectValue::new();
+        obj.insert(
+            "ssl_cipher".to_string(),
+            FieldStorage::from_owned(DataField::from_chars("ssl_cipher", "ECDHE")),
+        );
+        DataRecord {
+            id: Default::default(),
+            items: vec![
+                FieldStorage::from_owned(DataField::from_digit("status", 200)),
+                FieldStorage::from_owned(DataField::from_obj("extends", obj)),
+                FieldStorage::from_owned(DataField::from_digit("length", 50)),
+            ],
+        }
+    }
+
+    #[test]
+    fn test_format_record_with_obj_no_newlines() {
+        let json = Json;
+        let record = make_record_with_obj();
+        let result = json.format_record(&record);
+        assert!(
+            !result.contains('\n'),
+            "record output should not contain newlines: {}",
+            result
+        );
+        assert!(result.contains("\"ssl_cipher\""));
+        assert!(result.contains("\"ECDHE\""));
+        assert!(result.contains("\"status\":200"));
+    }
+
+    #[test]
+    fn test_fmt_record_with_obj_no_newlines() {
+        let json = Json;
+        let record = make_record_with_obj();
+        let result = json.fmt_record(&record);
+        assert!(
+            !result.contains('\n'),
+            "record output should not contain newlines: {}",
+            result
+        );
+        assert!(result.contains("\"ssl_cipher\""));
+        assert!(result.contains("\"ECDHE\""));
+    }
+
+    #[test]
+    fn test_old_new_api_consistency_nested() {
+        let json = Json;
+        let record = make_record_with_obj();
+        assert_eq!(json.format_record(&record), json.fmt_record(&record));
     }
 }
 

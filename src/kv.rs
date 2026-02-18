@@ -2,9 +2,7 @@
 use crate::formatter::DataFormat;
 use crate::formatter::{RecordFormatter, ValueFormatter};
 use std::fmt::Write;
-use wp_model_core::model::{
-    DataRecord, DataType, FieldStorage, data::record::RecordItem, types::value::ObjectValue,
-};
+use wp_model_core::model::{DataRecord, DataType, FieldStorage, types::value::ObjectValue};
 
 pub struct KeyValue {
     pair_separator: String,
@@ -226,7 +224,7 @@ mod tests {
     #[test]
     fn test_format_field() {
         let kv = KeyValue::default();
-        let field = FieldStorage::Owned(DataField::from_chars("name", "Alice"));
+        let field = FieldStorage::from_owned(DataField::from_chars("name", "Alice"));
         let result = kv.format_field(&field);
         assert_eq!(result, "name: \"Alice\"");
     }
@@ -234,7 +232,7 @@ mod tests {
     #[test]
     fn test_format_field_with_custom_separator() {
         let kv = KeyValue::new().with_key_value_separator("=");
-        let field = FieldStorage::Owned(DataField::from_digit("age", 30));
+        let field = FieldStorage::from_owned(DataField::from_digit("age", 30));
         let result = kv.format_field(&field);
         assert_eq!(result, "age=30");
     }
@@ -245,8 +243,8 @@ mod tests {
         let record = DataRecord {
             id: Default::default(),
             items: vec![
-                FieldStorage::Owned(DataField::from_chars("name", "Alice")),
-                FieldStorage::Owned(DataField::from_digit("age", 30)),
+                FieldStorage::from_owned(DataField::from_chars("name", "Alice")),
+                FieldStorage::from_owned(DataField::from_digit("age", 30)),
             ],
         };
         let result = kv.format_record(&record);
@@ -264,8 +262,8 @@ mod tests {
         let record = DataRecord {
             id: Default::default(),
             items: vec![
-                FieldStorage::Owned(DataField::from_chars("a", "x")),
-                FieldStorage::Owned(DataField::from_chars("b", "y")),
+                FieldStorage::from_owned(DataField::from_chars("a", "x")),
+                FieldStorage::from_owned(DataField::from_chars("b", "y")),
             ],
         };
         let result = kv.format_record(&record);
@@ -276,14 +274,63 @@ mod tests {
     fn test_format_array() {
         let kv = KeyValue::default();
         let arr = vec![
-            FieldStorage::Owned(DataField::from_digit("", 1)),
-            FieldStorage::Owned(DataField::from_digit("", 2)),
+            FieldStorage::from_owned(DataField::from_digit("", 1)),
+            FieldStorage::from_owned(DataField::from_digit("", 2)),
         ];
         let result = kv.format_array(&arr);
         assert!(result.starts_with('['));
         assert!(result.ends_with(']'));
         assert!(result.contains("1"));
         assert!(result.contains("2"));
+    }
+
+    fn make_record_with_obj() -> DataRecord {
+        let mut obj = ObjectValue::new();
+        obj.insert(
+            "ssl_cipher".to_string(),
+            FieldStorage::from_owned(DataField::from_chars("ssl_cipher", "ECDHE")),
+        );
+        DataRecord {
+            id: Default::default(),
+            items: vec![
+                FieldStorage::from_owned(DataField::from_digit("status", 200)),
+                FieldStorage::from_owned(DataField::from_obj("extends", obj)),
+                FieldStorage::from_owned(DataField::from_digit("length", 50)),
+            ],
+        }
+    }
+
+    #[test]
+    fn test_format_record_with_obj_no_newlines() {
+        let kv = KeyValue::default();
+        let record = make_record_with_obj();
+        let result = kv.format_record(&record);
+        assert!(
+            !result.contains('\n'),
+            "record output should not contain newlines: {}",
+            result
+        );
+        assert!(result.contains("ECDHE"));
+        assert!(result.contains("status: 200"));
+    }
+
+    #[test]
+    fn test_fmt_record_with_obj_no_newlines() {
+        let kv = KeyValue::default();
+        let record = make_record_with_obj();
+        let result = kv.fmt_record(&record);
+        assert!(
+            !result.contains('\n'),
+            "record output should not contain newlines: {}",
+            result
+        );
+    }
+
+    #[test]
+    fn test_old_new_api_consistency_nested() {
+        let kv = KeyValue::default();
+        let record = make_record_with_obj();
+        assert_eq!(kv.format_record(&record), kv.fmt_record(&record));
     }
 }
 

@@ -2,9 +2,7 @@
 use crate::formatter::DataFormat;
 use crate::formatter::{RecordFormatter, ValueFormatter};
 use std::fmt::Write;
-use wp_model_core::model::{
-    DataRecord, DataType, FieldStorage, data::record::RecordItem, types::value::ObjectValue,
-};
+use wp_model_core::model::{DataRecord, DataType, FieldStorage, types::value::ObjectValue};
 
 pub struct Csv {
     delimiter: char,
@@ -246,8 +244,8 @@ mod tests {
         let record = DataRecord {
             id: Default::default(),
             items: vec![
-                FieldStorage::Owned(DataField::from_chars("name", "Alice")),
-                FieldStorage::Owned(DataField::from_digit("age", 30)),
+                FieldStorage::from_owned(DataField::from_chars("name", "Alice")),
+                FieldStorage::from_owned(DataField::from_digit("age", 30)),
             ],
         };
         let result = csv.format_record(&record);
@@ -260,8 +258,8 @@ mod tests {
         let record = DataRecord {
             id: Default::default(),
             items: vec![
-                FieldStorage::Owned(DataField::from_chars("a", "x")),
-                FieldStorage::Owned(DataField::from_chars("b", "y")),
+                FieldStorage::from_owned(DataField::from_chars("a", "x")),
+                FieldStorage::from_owned(DataField::from_chars("b", "y")),
             ],
         };
         let result = csv.format_record(&record);
@@ -274,12 +272,65 @@ mod tests {
         let record = DataRecord {
             id: Default::default(),
             items: vec![
-                FieldStorage::Owned(DataField::from_chars("msg", "hello,world")),
-                FieldStorage::Owned(DataField::from_digit("count", 5)),
+                FieldStorage::from_owned(DataField::from_chars("msg", "hello,world")),
+                FieldStorage::from_owned(DataField::from_digit("count", 5)),
             ],
         };
         let result = csv.format_record(&record);
         assert!(result.contains("\"hello,world\""));
+    }
+
+    fn make_record_with_obj() -> DataRecord {
+        let mut obj = ObjectValue::new();
+        obj.insert(
+            "ssl_cipher".to_string(),
+            FieldStorage::from_owned(DataField::from_chars("ssl_cipher", "ECDHE")),
+        );
+        obj.insert(
+            "ssl_protocol".to_string(),
+            FieldStorage::from_owned(DataField::from_chars("ssl_protocol", "TLSv1.3")),
+        );
+        DataRecord {
+            id: Default::default(),
+            items: vec![
+                FieldStorage::from_owned(DataField::from_digit("status", 200)),
+                FieldStorage::from_owned(DataField::from_obj("extends", obj)),
+                FieldStorage::from_owned(DataField::from_digit("length", 50)),
+            ],
+        }
+    }
+
+    #[test]
+    fn test_format_record_with_obj_no_newlines() {
+        let csv = Csv::default();
+        let record = make_record_with_obj();
+        let result = csv.format_record(&record);
+        assert!(
+            !result.contains('\n'),
+            "record output should not contain newlines: {}",
+            result
+        );
+        assert!(result.contains("ECDHE"));
+        assert!(result.contains("TLSv1.3"));
+    }
+
+    #[test]
+    fn test_fmt_record_with_obj_no_newlines() {
+        let csv = Csv::default();
+        let record = make_record_with_obj();
+        let result = csv.fmt_record(&record);
+        assert!(
+            !result.contains('\n'),
+            "record output should not contain newlines: {}",
+            result
+        );
+    }
+
+    #[test]
+    fn test_old_new_api_consistency_nested() {
+        let csv = Csv::default();
+        let record = make_record_with_obj();
+        assert_eq!(csv.format_record(&record), csv.fmt_record(&record));
     }
 }
 

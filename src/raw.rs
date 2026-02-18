@@ -2,7 +2,7 @@
 use crate::formatter::DataFormat;
 use crate::formatter::{RecordFormatter, ValueFormatter};
 use wp_model_core::model::types::value::ObjectValue;
-use wp_model_core::model::{DataRecord, DataType, FieldStorage, Value, data::record::RecordItem};
+use wp_model_core::model::{DataRecord, DataType, FieldStorage, Value};
 
 #[derive(Debug, Default)]
 pub struct Raw;
@@ -156,7 +156,7 @@ mod tests {
     #[test]
     fn test_format_field_chars() {
         let raw = Raw;
-        let field = FieldStorage::Owned(DataField::from_chars("name", "Alice"));
+        let field = FieldStorage::from_owned(DataField::from_chars("name", "Alice"));
         let result = raw.format_field(&field);
         assert_eq!(result, "Alice");
     }
@@ -164,7 +164,7 @@ mod tests {
     #[test]
     fn test_format_field_digit() {
         let raw = Raw;
-        let field = FieldStorage::Owned(DataField::from_digit("age", 30));
+        let field = FieldStorage::from_owned(DataField::from_digit("age", 30));
         let result = raw.format_field(&field);
         assert_eq!(result, "30");
     }
@@ -175,8 +175,8 @@ mod tests {
         let record = DataRecord {
             id: Default::default(),
             items: vec![
-                FieldStorage::Owned(DataField::from_chars("name", "Alice")),
-                FieldStorage::Owned(DataField::from_digit("age", 30)),
+                FieldStorage::from_owned(DataField::from_chars("name", "Alice")),
+                FieldStorage::from_owned(DataField::from_digit("age", 30)),
             ],
         };
         let result = raw.format_record(&record);
@@ -194,9 +194,9 @@ mod tests {
     fn test_format_array_with_values() {
         let raw = Raw;
         let arr = vec![
-            FieldStorage::Owned(DataField::from_digit("", 1)),
-            FieldStorage::Owned(DataField::from_digit("", 2)),
-            FieldStorage::Owned(DataField::from_digit("", 3)),
+            FieldStorage::from_owned(DataField::from_digit("", 1)),
+            FieldStorage::from_owned(DataField::from_digit("", 2)),
+            FieldStorage::from_owned(DataField::from_digit("", 3)),
         ];
         let result = raw.format_array(&arr);
         assert_eq!(result, "[1, 2, 3]");
@@ -207,6 +207,54 @@ mod tests {
         let raw = Raw;
         let obj = ObjectValue::new();
         assert_eq!(raw.format_object(&obj), "{}");
+    }
+
+    fn make_record_with_obj() -> DataRecord {
+        let mut obj = ObjectValue::new();
+        obj.insert(
+            "ssl_cipher".to_string(),
+            FieldStorage::from_owned(DataField::from_chars("ssl_cipher", "ECDHE")),
+        );
+        DataRecord {
+            id: Default::default(),
+            items: vec![
+                FieldStorage::from_owned(DataField::from_digit("status", 200)),
+                FieldStorage::from_owned(DataField::from_obj("extends", obj)),
+                FieldStorage::from_owned(DataField::from_digit("length", 50)),
+            ],
+        }
+    }
+
+    #[test]
+    fn test_format_record_with_obj_no_newlines() {
+        let raw = Raw;
+        let record = make_record_with_obj();
+        let result = raw.format_record(&record);
+        assert!(
+            !result.contains('\n'),
+            "record output should not contain newlines: {}",
+            result
+        );
+        assert!(result.contains("ECDHE"));
+    }
+
+    #[test]
+    fn test_fmt_record_with_obj_no_newlines() {
+        let raw = Raw;
+        let record = make_record_with_obj();
+        let result = raw.fmt_record(&record);
+        assert!(
+            !result.contains('\n'),
+            "record output should not contain newlines: {}",
+            result
+        );
+    }
+
+    #[test]
+    fn test_old_new_api_consistency_nested() {
+        let raw = Raw;
+        let record = make_record_with_obj();
+        assert_eq!(raw.format_record(&record), raw.fmt_record(&record));
     }
 }
 

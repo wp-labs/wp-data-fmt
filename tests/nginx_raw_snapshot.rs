@@ -17,20 +17,20 @@ fn nginx_access_log_raw_snapshot() {
     let record = DataRecord {
         id: Default::default(),
         items: vec![
-            FieldStorage::Owned(DataField::from_ip("ip", ip)),
-            FieldStorage::Owned(DataField::from_time("time", ts)),
-            FieldStorage::Owned(DataField::from_chars(
+            FieldStorage::from_owned(DataField::from_ip("ip", ip)),
+            FieldStorage::from_owned(DataField::from_time("time", ts)),
+            FieldStorage::from_owned(DataField::from_chars(
                 "http/request",
                 "GET /nginx-logo.png HTTP/1.1",
             )),
-            FieldStorage::Owned(DataField::from_digit("http/status", 200)),
-            FieldStorage::Owned(DataField::from_digit("length", 368)),
-            FieldStorage::Owned(DataField::from_chars("chars", "http://119.122.1.4/")),
-            FieldStorage::Owned(DataField::from_chars(
+            FieldStorage::from_owned(DataField::from_digit("http/status", 200)),
+            FieldStorage::from_owned(DataField::from_digit("length", 368)),
+            FieldStorage::from_owned(DataField::from_chars("chars", "http://119.122.1.4/")),
+            FieldStorage::from_owned(DataField::from_chars(
                 "http/agent",
                 "Mozilla/5.0(Macintosh; Intel Mac OS X 10_14_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36 ",
             )),
-            FieldStorage::Owned(DataField::from_chars("src_key", "_")),
+            FieldStorage::from_owned(DataField::from_chars("src_key", "_")),
         ],
     };
 
@@ -47,7 +47,7 @@ fn raw_keeps_nested_values() {
     let mut obj = ObjectValue::new();
     obj.insert(
         "inner".to_string(),
-        FieldStorage::Owned(DataField::from_digit("inner", 7)),
+        FieldStorage::from_owned(DataField::from_digit("inner", 7)),
     );
     let array = vec![
         DataField::from_chars("a", "foo"),
@@ -57,8 +57,8 @@ fn raw_keeps_nested_values() {
     let record = DataRecord {
         id: Default::default(),
         items: vec![
-            FieldStorage::Owned(DataField::from_obj("payload", obj)),
-            FieldStorage::Owned(DataField::from_arr("list", array)),
+            FieldStorage::from_owned(DataField::from_obj("payload", obj)),
+            FieldStorage::from_owned(DataField::from_arr("list", array)),
         ],
     };
 

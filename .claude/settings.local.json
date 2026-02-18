@@ -14,7 +14,8 @@
       "Bash(cargo update:*)",
       "Bash(cargo clippy:*)",
       "Bash(RUSTFLAGS=\"-D warnings\" cargo build:*)",
-      "Bash(RUSTFLAGS=\"-D warnings\" cargo test:*)"
+      "Bash(RUSTFLAGS=\"-D warnings\" cargo test:*)",
+      "Bash(cargo tree:*)"
     ]
   }
 }

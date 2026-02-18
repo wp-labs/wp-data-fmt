@@ -1,9 +1,7 @@
 #[allow(deprecated)]
 use crate::formatter::DataFormat;
 use crate::formatter::{RecordFormatter, ValueFormatter};
-use wp_model_core::model::{
-    DataRecord, DataType, FieldStorage, Value, data::record::RecordItem, types::value::ObjectValue,
-};
+use wp_model_core::model::{DataRecord, DataType, FieldStorage, Value, types::value::ObjectValue};
 
 #[derive(Default)]
 pub struct ProtoTxt;
@@ -39,11 +37,11 @@ impl DataFormat for ProtoTxt {
         self.format_string(&v.to_string())
     }
     fn format_object(&self, value: &ObjectValue) -> String {
-        let mut out = String::new();
-        for (k, v) in value.iter() {
-            out.push_str(&format!("{}: {}\n", k, self.fmt_value(v.get_value())));
-        }
-        out
+        let items: Vec<String> = value
+            .iter()
+            .map(|(k, v)| format!("{}: {}", k, self.fmt_value(v.get_value())))
+            .collect();
+        items.join(" ")
     }
     fn format_array(&self, value: &[FieldStorage]) -> String {
         let items: Vec<String> = value
@@ -164,7 +162,7 @@ mod tests {
     #[test]
     fn test_format_field() {
         let proto = ProtoTxt;
-        let field = FieldStorage::Owned(DataField::from_chars("name", "Alice"));
+        let field = FieldStorage::from_owned(DataField::from_chars("name", "Alice"));
         let result = proto.format_field(&field);
         assert_eq!(result, "name: \"Alice\"");
     }
@@ -172,7 +170,7 @@ mod tests {
     #[test]
     fn test_format_field_digit() {
         let proto = ProtoTxt;
-        let field = FieldStorage::Owned(DataField::from_digit("age", 30));
+        let field = FieldStorage::from_owned(DataField::from_digit("age", 30));
         let result = proto.format_field(&field);
         assert_eq!(result, "age: 30");
     }
@@ -183,8 +181,8 @@ mod tests {
         let record = DataRecord {
             id: Default::default(),
             items: vec![
-                FieldStorage::Owned(DataField::from_chars("name", "Alice")),
-                FieldStorage::Owned(DataField::from_digit("age", 30)),
+                FieldStorage::from_owned(DataField::from_chars("name", "Alice")),
+                FieldStorage::from_owned(DataField::from_digit("age", 30)),
             ],
         };
         let result = proto.format_record(&record);
@@ -198,12 +196,92 @@ mod tests {
     fn test_format_array() {
         let proto = ProtoTxt;
         let arr = vec![
-            FieldStorage::Owned(DataField::from_digit("x", 1)),
-            FieldStorage::Owned(DataField::from_digit("y", 2)),
+            FieldStorage::from_owned(DataField::from_digit("x", 1)),
+            FieldStorage::from_owned(DataField::from_digit("y", 2)),
         ];
         let result = proto.format_array(&arr);
         assert!(result.starts_with('['));
         assert!(result.ends_with(']'));
+    }
+
+    /// 构造一个包含 Obj 和 Array 字段的 record，用于嵌套格式化测试
+    fn make_record_with_nested() -> DataRecord {
+        let mut obj = ObjectValue::new();
+        obj.insert(
+            "ssl_cipher".to_string(),
+            FieldStorage::from_owned(DataField::from_chars("ssl_cipher", "ECDHE")),
+        );
+        obj.insert(
+            "ssl_protocol".to_string(),
+            FieldStorage::from_owned(DataField::from_chars("ssl_protocol", "TLSv1.3")),
+        );
+        let arr = vec![
+            DataField::from_chars("", "foo"),
+            DataField::from_digit("", 42),
+        ];
+        DataRecord {
+            id: Default::default(),
+            items: vec![
+                FieldStorage::from_owned(DataField::from_digit("sent_bytes", 200)),
+                FieldStorage::from_owned(DataField::from_obj("extends", obj)),
+                FieldStorage::from_owned(DataField::from_arr("tags", arr)),
+                FieldStorage::from_owned(DataField::from_digit("match_chars", 50)),
+            ],
+        }
+    }
+
+    /// 回归测试：format_value(Value::Obj) 曾使用 \n 作为分隔符，
+    /// 嵌入 record 后导致输出中出现意外换行
+    #[test]
+    fn test_format_record_with_obj_no_newlines() {
+        let proto = ProtoTxt;
+        let record = make_record_with_nested();
+        let result = proto.format_record(&record);
+        assert!(
+            !result.contains('\n'),
+            "record output should not contain newlines: {}",
+            result
+        );
+        assert!(result.contains("ssl_cipher: \"ECDHE\""));
+        assert!(result.contains("ssl_protocol: \"TLSv1.3\""));
+        assert!(result.contains("sent_bytes: 200"));
+        assert!(result.contains("match_chars: 50"));
+    }
+
+    #[test]
+    fn test_fmt_record_with_obj_no_newlines() {
+        let proto = ProtoTxt;
+        let record = make_record_with_nested();
+        let result = proto.fmt_record(&record);
+        assert!(
+            !result.contains('\n'),
+            "record output should not contain newlines: {}",
+            result
+        );
+        assert!(result.contains("ssl_cipher: \"ECDHE\""));
+        assert!(result.contains("ssl_protocol: \"TLSv1.3\""));
+        assert!(result.contains("tags: [\"foo\", 42]"));
+    }
+
+    /// 新旧 API 对含嵌套类型的 record 输出一致性
+    #[test]
+    fn test_old_new_api_consistency_nested() {
+        let proto = ProtoTxt;
+        let record = make_record_with_nested();
+        assert_eq!(proto.format_record(&record), proto.fmt_record(&record));
+    }
+
+    #[test]
+    fn test_old_new_api_consistency_scalar() {
+        let proto = ProtoTxt;
+        let record = DataRecord {
+            id: Default::default(),
+            items: vec![
+                FieldStorage::from_owned(DataField::from_chars("name", "Alice")),
+                FieldStorage::from_owned(DataField::from_digit("age", 30)),
+            ],
+        };
+        assert_eq!(proto.format_record(&record), proto.fmt_record(&record));
     }
 }
 
@@ -225,15 +303,11 @@ impl ValueFormatter for ProtoTxt {
             Value::IpAddr(v) => format!("\"{}\"", v),
             Value::Time(v) => format!("\"{}\"", v),
             Value::Obj(obj) => {
-                let mut out = String::new();
-                for (k, field) in obj.iter() {
-                    out.push_str(&format!(
-                        "{}: {}\n",
-                        k,
-                        self.format_value(field.get_value())
-                    ));
-                }
-                out
+                let items: Vec<String> = obj
+                    .iter()
+                    .map(|(k, field)| format!("{}: {}", k, self.format_value(field.get_value())))
+                    .collect();
+                items.join(" ")
             }
             Value::Array(arr) => {
                 let items: Vec<String> = arr
