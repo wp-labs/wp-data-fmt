@@ -1,8 +1,10 @@
 #[allow(deprecated)]
 use crate::formatter::DataFormat;
-use crate::formatter::{RecordFormatter, ValueFormatter};
-use std::fmt::Write;
-use wp_model_core::model::{DataRecord, DataType, FieldStorage, types::value::ObjectValue};
+use crate::{
+    formatter::{RecordFormatter, ValueFormatter},
+    Json,
+};
+use wp_model_core::model::{types::value::ObjectValue, DataRecord, DataType, FieldStorage, Value};
 
 pub struct Csv {
     delimiter: char,
@@ -55,6 +57,13 @@ impl Csv {
             output.push_str(value);
         }
     }
+
+    fn format_json_cell(&self, value: &Value) -> String {
+        let json = Json;
+        let mut output = String::new();
+        self.escape_string(&json.format_value(value), &mut output);
+        output
+    }
 }
 
 #[allow(deprecated)]
@@ -84,26 +93,10 @@ impl DataFormat for Csv {
         self.format_string(&value.to_string())
     }
     fn format_object(&self, value: &ObjectValue) -> String {
-        let mut output = String::new();
-        for (i, (k, v)) in value.iter().enumerate() {
-            if i > 0 {
-                output.push_str(", ");
-            }
-            write!(output, "{}:{}", k, self.fmt_value(v.get_value())).unwrap();
-        }
-        output
+        self.format_json_cell(&Value::Obj(value.clone()))
     }
     fn format_array(&self, value: &[FieldStorage]) -> String {
-        let mut output = String::new();
-        self.escape_string(
-            &value
-                .iter()
-                .map(|f| self.fmt_value(f.get_value()))
-                .collect::<Vec<_>>()
-                .join(", "),
-            &mut output,
-        );
-        output
+        self.format_json_cell(&Value::Array(value.to_vec()))
     }
     fn format_field(&self, field: &FieldStorage) -> String {
         self.fmt_value(field.get_value())
@@ -342,8 +335,7 @@ mod tests {
 impl ValueFormatter for Csv {
     type Output = String;
 
-    fn format_value(&self, value: &wp_model_core::model::Value) -> String {
-        use wp_model_core::model::Value;
+    fn format_value(&self, value: &Value) -> String {
         match value {
             Value::Null => String::new(),
             Value::Bool(v) => if *v { "true" } else { "false" }.to_string(),
@@ -364,27 +356,7 @@ impl ValueFormatter for Csv {
                 self.escape_string(&v.to_string(), &mut o);
                 o
             }
-            Value::Obj(v) => {
-                let mut output = String::new();
-                for (i, (k, field)) in v.iter().enumerate() {
-                    if i > 0 {
-                        output.push_str(", ");
-                    }
-                    write!(output, "{}:{}", k, self.format_value(field.get_value())).unwrap();
-                }
-                output
-            }
-            Value::Array(v) => {
-                let mut output = String::new();
-                self.escape_string(
-                    &v.iter()
-                        .map(|field| self.format_value(field.get_value()))
-                        .collect::<Vec<_>>()
-                        .join(", "),
-                    &mut output,
-                );
-                output
-            }
+            Value::Obj(_) | Value::Array(_) => self.format_json_cell(value),
             _ => {
                 let mut o = String::new();
                 self.escape_string(&value.to_string(), &mut o);
