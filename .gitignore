@@ -1,5 +1,6 @@
 .run.gxl
 target
 .report
+.tmp
 *.log
 Cargo.lock
