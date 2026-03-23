@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v0.2.4] - Unreleased
+
+### Fixed
+- Fix CSV formatting issues
+
 ## [v0.2.3] - 2026-03-23
 
 ### Changed
