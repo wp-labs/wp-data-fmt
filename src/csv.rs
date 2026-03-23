@@ -1,10 +1,10 @@
 #[allow(deprecated)]
 use crate::formatter::DataFormat;
 use crate::{
-    formatter::{RecordFormatter, ValueFormatter},
     Json,
+    formatter::{RecordFormatter, ValueFormatter},
 };
-use wp_model_core::model::{types::value::ObjectValue, DataRecord, DataType, FieldStorage, Value};
+use wp_model_core::model::{DataRecord, DataType, FieldStorage, Value, types::value::ObjectValue};
 
 pub struct Csv {
     delimiter: char,
